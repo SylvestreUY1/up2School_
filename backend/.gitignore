@@ -1,0 +1,8 @@
+# Backend Git Ignore
+node_modules/
+.env
+.env.local
+*.local
+firebase-debug.log
+firebase-debug.*.log
+.firebase/

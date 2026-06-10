@@ -1,0 +1,22 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "up2school-app",
+          "appId": "1:846269435063:android:edc094d92f1d7c7e5a5132",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "up2school-app",
+          "configurations": {
+            "android": "1:846269435063:android:edc094d92f1d7c7e5a5132",
+            "ios": "1:846269435063:ios:e3e8cb9c7b67f7fb5a5132"
+          }
+        }
+      }
+    }
+  }
+}

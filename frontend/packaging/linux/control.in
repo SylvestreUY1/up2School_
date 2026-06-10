@@ -1,0 +1,15 @@
+Package: uy1-lib
+Version: 1.0.0
+Section: education
+Priority: optional
+Architecture: amd64
+Maintainer: Up2School Team <up2school237@gmail.com>
+Depends: libgtk-3-0, libblkid1, liblzma5, libstdc++6, libsecret-1-0
+Homepage: https://up2school-app.web.app/
+Description: Plateforme de partage de ressources pour étudiants
+ UY1-Lib est une application collaborative pour les étudiants de
+ l’Université de Yaoundé I. Elle facilite le partage de cours,
+ TD, examens et projets, ainsi que la diffusion d’événements académiques.
+
+
+ 

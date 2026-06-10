@@ -1,0 +1,11 @@
+# Root Git Ignore
+.DS_Store
+*.log
+
+# Ignore IDE settings at root (now moved to subfolders)
+.idea/
+.vscode/
+
+# Ensure subfolders are tracked
+!backend/
+!frontend/

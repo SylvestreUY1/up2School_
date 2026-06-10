@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=UY1-Lib
+Comment=Application de distribution de fichiers universitaires
+Exec=/opt/up2school/up2school
+Icon=up2school
+Terminal=false
+Type=Application
+Categories=Education;
+StartupNotify=true

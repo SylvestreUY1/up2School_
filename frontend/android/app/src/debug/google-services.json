@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "846269435063",
+    "project_id": "up2school-app",
+    "storage_bucket": "up2school-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846269435063:android:edc094d92f1d7c7e5a5132",
+        "android_client_info": {
+          "package_name": "com.example.up2school"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRhXsylT2YdP_80ZTpSHngMW8yhPRcalw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846269435063:android:82cb3b492197ff6c5a5132",
+        "android_client_info": {
+          "package_name": "com.up2school"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRhXsylT2YdP_80ZTpSHngMW8yhPRcalw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

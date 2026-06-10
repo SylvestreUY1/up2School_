@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: up2school-api
+    env: node
+    rootDir: backend/functions
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PUBLIC_BASE_URL
+        value: https://up2school-api.onrender.com
+      - key: FIREBASE_PROJECT_ID
+        value: up2school-app
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_PROJECT_ID
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
