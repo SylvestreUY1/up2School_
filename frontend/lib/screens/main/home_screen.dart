@@ -1664,6 +1664,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return context.l10n.roleLabel(role?.name ?? 'guest');
   }
 
+  TextStyle get _explorerCardTitleStyle => const TextStyle(
+        fontFamily: 'Aclonica',
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        letterSpacing: 0,
+        color: AppConstants.primaryColor,
+      );
+
+  TextStyle get _explorerBadgeTextStyle => const TextStyle(
+        fontFamily: 'Aclonica',
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+        color: AppConstants.primaryColor,
+      );
+
   Widget _buildFileExplorer() {
     if (_selectedFac == null) {
       return _buildFacultiesList();
@@ -1771,40 +1788,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }) {
     return Card(
       elevation: 2,
-      child: ListTile(
-        dense: true,
-        onTap: () => _selectFaculty(fullName),
-        leading: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              abbreviation,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF307A59),
+      child: Center(
+        child: ListTile(
+          dense: true,
+          onTap: () => _selectFaculty(fullName),
+          leading: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                abbreviation,
+                style: _explorerBadgeTextStyle,
               ),
             ),
           ),
+          title: Text(
+            abbreviation,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _explorerCardTitleStyle,
+          ),
+          subtitle: Text(
+            fullName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
         ),
-        title: Text(
-          abbreviation,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          fullName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
       ),
     );
   }
@@ -1812,39 +1827,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildLevelCard(String level) {
     return Card(
       elevation: 2,
-      child: ListTile(
-        dense: true,
-        onTap: () => _selectLevel(level),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              level,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF307A59),
+      child: Center(
+        child: ListTile(
+          dense: true,
+          onTap: () => _selectLevel(level),
+          leading: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                level,
+                style: _explorerBadgeTextStyle.copyWith(fontSize: 16),
               ),
             ),
           ),
+          title: Text(
+            context.l10n.levelLabel(level),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _explorerCardTitleStyle,
+          ),
+          subtitle: Text(
+            context.l10n.licenseMaster,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
         ),
-        title: Text(
-          context.l10n.levelLabel(level),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          context.l10n.licenseMaster,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
       ),
     );
   }
@@ -1852,30 +1865,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildFieldCard(String field) {
     return Card(
       elevation: 2,
-      child: ListTile(
-        dense: true,
-        onTap: () => _selectField(field),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+      child: Center(
+        child: ListTile(
+          dense: true,
+          onTap: () => _selectField(field),
+          leading: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.category, color: Color(0xFF307A59)),
           ),
-          child: const Icon(Icons.category, color: Color(0xFF307A59)),
+          title: Text(
+            field,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _explorerCardTitleStyle,
+          ),
+          subtitle: Text(
+            context.l10n.field,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
         ),
-        title: Text(
-          field,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          context.l10n.field,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
       ),
     );
   }
@@ -1883,30 +1898,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildUnitCard(String unit) {
     return Card(
       elevation: 2,
-      child: ListTile(
-        dense: true,
-        onTap: () => _selectUnit(unit),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+      child: Center(
+        child: ListTile(
+          dense: true,
+          onTap: () => _selectUnit(unit),
+          leading: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.library_books, color: Color(0xFF307A59)),
           ),
-          child: const Icon(Icons.library_books, color: Color(0xFF307A59)),
+          title: Text(
+            unit,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _explorerCardTitleStyle,
+          ),
+          subtitle: Text(
+            context.l10n.teachingUnit,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
         ),
-        title: Text(
-          unit,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          context.l10n.teachingUnit,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
       ),
     );
   }
@@ -1953,33 +1970,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Card(
       elevation: 2,
-      child: ListTile(
-        dense: true,
-        onTap: () {
-          _updateLastActivity(); // Mise à jour avant navigation
-          _navigateToDocumentType(type);
-        },
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+      child: Center(
+        child: ListTile(
+          dense: true,
+          onTap: () {
+            _updateLastActivity(); // Mise à jour avant navigation
+            _navigateToDocumentType(type);
+          },
+          leading: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF307A59)),
           ),
-          child: Icon(icon, color: const Color(0xFF307A59)),
+          title: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _explorerCardTitleStyle,
+          ),
+          subtitle: Text(
+            context.l10n.documentsOf(label),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
         ),
-        title: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          context.l10n.documentsOf(label),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF307A59)),
       ),
     );
   }

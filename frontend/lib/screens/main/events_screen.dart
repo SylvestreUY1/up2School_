@@ -43,7 +43,7 @@ class _EventsScreenState extends State<EventsScreen> {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1080),
+        constraints: const BoxConstraints(maxWidth: 760),
         child: child,
       ),
     );

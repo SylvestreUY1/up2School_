@@ -64,10 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 28.0,
-        title: Transform.translate(
-          offset: const Offset(0, -3),
-          child: Text(l10n.profile, style: const TextStyle(fontSize: 18)),
-        ),
       ),
       body: user == null
           ? Center(
@@ -89,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           : Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: _useDesktopLayout(context) ? 920 : double.infinity,
+                  maxWidth: _useDesktopLayout(context) ? 720 : double.infinity,
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
@@ -102,7 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Center(
                           child: CircleAvatar(
                             radius: 50,
-                            backgroundColor: const Color(0xFF2E9366),
+                            backgroundColor: AppHelpers.getRandomColor(
+                              '${user.id}|${user.email}',
+                            ),
                             child: Text(
                               AppHelpers.getUserInitial(
                                 user.name,

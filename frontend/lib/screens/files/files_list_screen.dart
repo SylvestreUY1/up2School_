@@ -552,6 +552,90 @@ class _FilesListScreenState extends State<FilesListScreen> {
     );
   }
 
+  Widget _buildDocumentCard(
+    FileModel file,
+    AuthProvider authProvider,
+    UserModel? currentUser,
+  ) {
+    final canDelete = Permissions.canDeleteFile(currentUser, file);
+
+    return EnhancedFileCard(
+      file: file,
+      currentUserId: currentUser?.id ?? '',
+      currentUser: currentUser,
+      onFavorite: () => _toggleFavorite(file),
+      onDelete: () => _deleteFile(file, authProvider),
+      onDeleteLocal: () => _deleteLocalFile(file),
+      onCopyLink: () => _shareFileLink(file),
+      onExport: () => _exportFile(file),
+      canDelete: canDelete,
+      onOpen: () => _markAsOpened(file, authProvider),
+      onSubscribe: _showSubscriptionPrompt,
+    );
+  }
+
+  Widget _buildLoadingMoreIndicator({required bool isGrid}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isGrid ? 0 : 16),
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentsView(
+    AuthProvider authProvider,
+    UserModel? currentUser,
+  ) {
+    final isDesktop = _useDesktopLayout(context);
+    final itemCount = _files.length + (_hasMore ? 1 : 0);
+
+    if (!isDesktop) {
+      return ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          if (index == _files.length) {
+            return _buildLoadingMoreIndicator(isGrid: false);
+          }
+
+          return _buildDocumentCard(
+            _files[index],
+            authProvider,
+            currentUser,
+          );
+        },
+      );
+    }
+
+    return GridView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisExtent: 150,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == _files.length) {
+          return _buildLoadingMoreIndicator(isGrid: true);
+        }
+
+        return _buildDocumentCard(
+          _files[index],
+          authProvider,
+          currentUser,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -624,44 +708,7 @@ class _FilesListScreenState extends State<FilesListScreen> {
                             ],
                           ),
                         )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.all(
-                            _useDesktopLayout(context) ? 24 : 16,
-                          ),
-                          itemCount: _files.length + (_hasMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == _files.length) {
-                              return const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Center(
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 3,
-                                  ),
-                                ),
-                              );
-                            }
-                            final file = _files[index];
-
-                            final canDelete =
-                                Permissions.canDeleteFile(currentUser, file);
-
-                            return EnhancedFileCard(
-                              file: file,
-                              currentUserId: currentUser?.id ?? '',
-                              currentUser: currentUser,
-                              onFavorite: () => _toggleFavorite(file),
-                              onDelete: () => _deleteFile(file, authProvider),
-                              onDeleteLocal: () => _deleteLocalFile(file),
-                              onCopyLink: () => _shareFileLink(file),
-                              onExport: () => _exportFile(file),
-                              canDelete: canDelete,
-                              onOpen: () => _markAsOpened(file, authProvider),
-                              onSubscribe: _showSubscriptionPrompt,
-                            );
-                          },
-                        ),
+                      : _buildDocumentsView(authProvider, currentUser),
                 ),
               ),
             ],

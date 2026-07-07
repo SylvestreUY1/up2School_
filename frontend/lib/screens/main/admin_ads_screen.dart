@@ -79,6 +79,10 @@ class _AdsListTabState extends State<AdsListTab> {
   List<AdModel> _ads = [];
   bool _isLoading = true;
 
+  bool _useDesktopLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1100;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -164,49 +168,57 @@ class _AdsListTabState extends State<AdsListTab> {
         ),
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _ads.length,
-      itemBuilder: (context, index) {
-        final ad = _ads[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          color: const Color.fromARGB(
-              156, 118, 242, 166), // couleur du pad d'une annonce
-          child: ListTile(
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                ad.imageUrl,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image, color: Colors.white70),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: _useDesktopLayout(context) ? 820 : double.infinity,
+        ),
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _ads.length,
+          itemBuilder: (context, index) {
+            final ad = _ads[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              color: const Color.fromARGB(
+                  156, 118, 242, 166), // couleur du pad d'une annonce
+              child: ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    ad.imageUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.broken_image, color: Colors.white70),
+                  ),
+                ),
+                title: Text(
+                  ad.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  "Clics: ${ad.clicks}\n"
+                  "Du ${_formatDate(ad.startDate)} au ${_formatDate(ad.endDate)}\n"
+                  "${AcademicTargeting.describeAudience(isGlobal: ad.isGlobal, faculty: ad.faculty, level: ad.level, field: ad.field)}",
+                  style: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255)),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete,
+                      color: Color.fromARGB(255, 255, 255, 255)),
+                  onPressed: () => _deleteAd(ad),
+                ),
               ),
-            ),
-            title: Text(
-              ad.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            subtitle: Text(
-              "Clics: ${ad.clicks}\n"
-              "Du ${_formatDate(ad.startDate)} au ${_formatDate(ad.endDate)}\n"
-              "${AcademicTargeting.describeAudience(isGlobal: ad.isGlobal, faculty: ad.faculty, level: ad.level, field: ad.field)}",
-              style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete,
-                  color: Color.fromARGB(255, 255, 255, 255)),
-              onPressed: () => _deleteAd(ad),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -247,6 +259,10 @@ class _CreateAdTabState extends State<CreateAdTab> {
   String? _selectedField;
   List<String> _levels = [];
   List<String> _fields = [];
+
+  bool _useDesktopLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1100;
+  }
 
   bool get _hasRequiredFields =>
       _titleController.text.trim().isNotEmpty &&
@@ -530,178 +546,187 @@ class _CreateAdTabState extends State<CreateAdTab> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Créer une publicité',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-            _buildTextField(
-              _titleController,
-              "Titre *",
-              Icons.title,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Le titre est obligatoire';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              _descriptionController,
-              "Description",
-              Icons.description,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 20),
-            _buildAudienceSection(),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: (_isLoading || _isPreparingImage) ? null : _pickImage,
-              child: Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: _selectedImage == null
-                        ? const Color.fromARGB(255, 255, 255, 255)
-                            .withOpacity(0.8)
-                        : Colors.white.withOpacity(0.7),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: _useDesktopLayout(context) ? 720 : double.infinity,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Créer une publicité',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
-                child: _selectedImage == null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_isPreparingImage)
-                              const SizedBox(
-                                width: 34,
-                                height: 34,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.6,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                const SizedBox(height: 30),
+                _buildTextField(
+                  _titleController,
+                  "Titre *",
+                  Icons.title,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Le titre est obligatoire';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  _descriptionController,
+                  "Description",
+                  Icons.description,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 20),
+                _buildAudienceSection(),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: (_isLoading || _isPreparingImage) ? null : _pickImage,
+                  child: Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _selectedImage == null
+                            ? const Color.fromARGB(255, 255, 255, 255)
+                                .withOpacity(0.8)
+                            : Colors.white.withOpacity(0.7),
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _selectedImage == null
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_isPreparingImage)
+                                  const SizedBox(
+                                    width: 34,
+                                    height: 34,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.6,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.image,
+                                    size: 40,
+                                    color: Colors.white70,
+                                  ),
+                                const SizedBox(height: 8),
+                                Text(
+                                    _isPreparingImage
+                                        ? "Preparation de l'image..."
+                                        : "Cliquez pour choisir une image",
+                                    style: TextStyle(color: Colors.white70)),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Image obligatoire',
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 255, 255, 255),
+                                    fontSize: 12,
                                   ),
                                 ),
-                              )
-                            else
-                              Icon(
-                                Icons.image,
-                                size: 40,
-                                color: Colors.white70,
-                              ),
-                            const SizedBox(height: 8),
-                            Text(
-                                _isPreparingImage
-                                    ? "Preparation de l'image..."
-                                    : "Cliquez pour choisir une image",
-                                style: TextStyle(color: Colors.white70)),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Image obligatoire',
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 255, 255, 255),
-                                fontSize: 12,
+                              ],
+                            ),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                              cacheWidth: 720,
+                              filterQuality: FilterQuality.low,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: Colors.white70,
+                                  size: 40,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _selectedImage!,
-                          fit: BoxFit.cover,
-                          cacheWidth: 720,
-                          filterQuality: FilterQuality.low,
-                          errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.white70,
-                              size: 40,
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  _targetUrlController,
+                  "Lien de redirection *",
+                  Icons.link,
+                  validator: (value) {
+                    final text = value?.trim() ?? '';
+                    if (text.isEmpty) {
+                      return 'Le lien est obligatoire';
+                    }
+                    final uri = Uri.tryParse(text);
+                    final isValidHttpUrl = uri != null &&
+                        uri.hasScheme &&
+                        (uri.scheme == 'http' || uri.scheme == 'https') &&
+                        uri.host.isNotEmpty;
+                    if (!isValidHttpUrl) {
+                      return 'Entrez une URL valide (http/https)';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildDatePicker("Date de début *", _startDate, true),
+                const SizedBox(height: 16),
+                _buildDatePicker("Date de fin *", _endDate, false),
+                if (_startDate == null || _endDate == null)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Les dates de début et de fin sont obligatoires',
+                      style: TextStyle(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: (_isSubmitEnabled && !_isPreparingImage)
+                              ? _publishAd
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E9366),
+                            disabledBackgroundColor:
+                                const Color(0xFF2E9366).withOpacity(0.45),
+                            foregroundColor: Colors.white,
+                            disabledForegroundColor: Colors.white70,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                          ),
+                          child: const Text(
+                            'Publier la publicité',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              _targetUrlController,
-              "Lien de redirection *",
-              Icons.link,
-              validator: (value) {
-                final text = value?.trim() ?? '';
-                if (text.isEmpty) {
-                  return 'Le lien est obligatoire';
-                }
-                final uri = Uri.tryParse(text);
-                final isValidHttpUrl = uri != null &&
-                    uri.hasScheme &&
-                    (uri.scheme == 'http' || uri.scheme == 'https') &&
-                    uri.host.isNotEmpty;
-                if (!isValidHttpUrl) {
-                  return 'Entrez une URL valide (http/https)';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildDatePicker("Date de début *", _startDate, true),
-            const SizedBox(height: 16),
-            _buildDatePicker("Date de fin *", _endDate, false),
-            if (_startDate == null || _endDate == null)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Les dates de début et de fin sont obligatoires',
-                  style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255), fontSize: 12),
                 ),
-              ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : ElevatedButton(
-                      onPressed: (_isSubmitEnabled && !_isPreparingImage)
-                          ? _publishAd
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E9366),
-                        disabledBackgroundColor:
-                            const Color(0xFF2E9366).withOpacity(0.45),
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white70,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                      child: const Text(
-                        'Publier la publicité',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

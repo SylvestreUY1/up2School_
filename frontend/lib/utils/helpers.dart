@@ -326,10 +326,26 @@ class AppHelpers {
     }
   }
 
-  // Générer une couleur aléatoire (pour les avatars)
+  // Générer une couleur stable par utilisateur (pour les avatars)
   static Color getRandomColor(String seed) {
-    final hash = seed.hashCode;
-    return Color(hash).withOpacity(1.0);
+    const avatarColors = [
+      Color(0xFF2E9366),
+      Color(0xFF42A5F5),
+      Color(0xFF00BCD4),
+      Color(0xFF4CAF50),
+      Color(0xFFFF9800),
+      Color(0xFFFF6C6C),
+      Color(0xFF7E57C2),
+      Color(0xFF26A69A),
+      Color(0xFFEC407A),
+      Color(0xFF5C6BC0),
+    ];
+    final normalizedSeed = seed.trim().toLowerCase();
+    final index = simpleHash(
+          normalizedSeed.isEmpty ? 'default-avatar' : normalizedSeed,
+        ).abs() %
+        avatarColors.length;
+    return avatarColors[index];
   }
 
   // Extraire l'extension d'un fichier
