@@ -1,11 +1,9 @@
 // delegate_management.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/user.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
-import '../../providers/auth_provider.dart';
 
 class DelegateManagementScreen extends StatefulWidget {
   const DelegateManagementScreen({super.key});
@@ -24,6 +22,10 @@ class _DelegateManagementScreenState extends State<DelegateManagementScreen> {
   List<UserModel> _filteredUsers = [];
   List<UserModel> _delegates = [];
   bool _isLoading = true;
+
+  bool _useDesktopLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1100;
+  }
 
   @override
   void initState() {
@@ -106,93 +108,104 @@ class _DelegateManagementScreenState extends State<DelegateManagementScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              style: const TextStyle(color: Colors.white),
-              cursorColor: Colors.white,
-              decoration: InputDecoration(
-                labelText: 'Rechercher un utilisateur',
-                labelStyle: const TextStyle(color: Colors.white),
-                prefixIcon: const Icon(Icons.search, color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.7)),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: _useDesktopLayout(context) ? 900 : double.infinity,
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white),
+                  cursorColor: Colors.white,
+                  decoration: InputDecoration(
+                    labelText: 'Rechercher un utilisateur',
+                    labelStyle: const TextStyle(color: Colors.white),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: Colors.white.withOpacity(0.7)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          BorderSide(color: Colors.white.withOpacity(0.7)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: Colors.white, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterUsers();
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (_) => _filterUsers(),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.7)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Colors.white, width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.1),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white),
-                        onPressed: () {
-                          _searchController.clear();
-                          _filterUsers();
-                        },
-                      )
-                    : null,
               ),
-              onChanged: (_) => _filterUsers(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _buildStatCard('Total', _allUsers.length.toString()),
-                const SizedBox(width: 10),
-                _buildStatCard('Délégués', _delegates.length.toString()),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  'Étudiants',
-                  (_allUsers.length - _delegates.length).toString(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    _buildStatCard('Total', _allUsers.length.toString()),
+                    const SizedBox(width: 10),
+                    _buildStatCard('Délégués', _delegates.length.toString()),
+                    const SizedBox(width: 10),
+                    _buildStatCard(
+                      'Étudiants',
+                      (_allUsers.length - _delegates.length).toString(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF307A59)))
-                : _filteredUsers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.people_outline,
-                                size: 100, color: Colors.grey),
-                            const SizedBox(height: 20),
-                            Text(
-                              _searchQuery.isEmpty
-                                  ? 'Aucun utilisateur trouvé'
-                                  : 'Aucun résultat pour "$_searchQuery"',
-                              style: const TextStyle(
-                                  fontSize: 18, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: Color(0xFF307A59)))
+                    : _filteredUsers.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.people_outline,
+                                    size: 100, color: Colors.grey),
+                                const SizedBox(height: 20),
+                                Text(
+                                  _searchQuery.isEmpty
+                                      ? 'Aucun utilisateur trouvé'
+                                      : 'Aucun résultat pour "$_searchQuery"',
+                                  style: const TextStyle(
+                                      fontSize: 18, color: Colors.grey),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredUsers[index];
-                          return _buildUserCard(user);
-                        },
-                      ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = _filteredUsers[index];
+                              return _buildUserCard(user);
+                            },
+                          ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

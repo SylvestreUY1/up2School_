@@ -1,12 +1,10 @@
 // faculty_management.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/faculty.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/helpers.dart';
-import '../../providers/auth_provider.dart';
 import '../../widgets/password_confirmation_dialog.dart'; // <-- ajout
 
 class FacultyManagementScreen extends StatefulWidget {
@@ -22,6 +20,10 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
   final AuthService _authService = AuthService();
   List<Faculty> _faculties = [];
   bool _isLoading = true;
+
+  bool _useDesktopLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 1100;
+  }
 
   @override
   void initState() {
@@ -367,169 +369,185 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF307A59)))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _faculties.length,
-              itemBuilder: (context, index) {
-                final faculty = _faculties[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ExpansionTile(
-                    leading: const Icon(Icons.school,
-                        color: Color(0xFF2E9366), size: 30),
-                    title: Text(
-                      faculty.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                    subtitle: Text('${faculty.levels.length} niveaux'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteFaculty(faculty),
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: _useDesktopLayout(context) ? 960 : double.infinity,
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _faculties.length,
+                  itemBuilder: (context, index) {
+                    final faculty = _faculties[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: ExpansionTile(
+                        leading: const Icon(Icons.school,
+                            color: Color(0xFF2E9366), size: 30),
+                        title: Text(
+                          faculty.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
                         ),
-                        const Icon(Icons.expand_more),
-                      ],
-                    ),
-                    children: [
-                      const Divider(),
-                      ...faculty.levels.map((level) {
-                        return Column(
+                        subtitle: Text('${faculty.levels.length} niveaux'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              color: Colors.grey[100],
-                              child: ListTile(
-                                title: Row(
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF2E9366)
-                                            .withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          'L',
-                                          style: TextStyle(
-                                            color: Color(0xFF2E9366),
-                                            fontWeight: FontWeight.bold,
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteFaculty(faculty),
+                            ),
+                            const Icon(Icons.expand_more),
+                          ],
+                        ),
+                        children: [
+                          const Divider(),
+                          ...faculty.levels.map((level) {
+                            return Column(
+                              children: [
+                                Container(
+                                  color: Colors.grey[100],
+                                  child: ListTile(
+                                    title: Row(
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF2E9366)
+                                                .withOpacity(0.2),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: const Center(
+                                            child: Text(
+                                              'L',
+                                              style: TextStyle(
+                                                color: Color(0xFF2E9366),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Niveau $level',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Niveau $level',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.add_circle,
+                                              color: Color(0xFF2E9366)),
+                                          onPressed: () =>
+                                              _addField(faculty.id, level),
+                                          tooltip: 'Ajouter une filière',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red),
+                                          onPressed: () =>
+                                              _removeLevel(faculty.id, level),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.add_circle,
-                                          color: Color(0xFF2E9366)),
-                                      onPressed: () =>
-                                          _addField(faculty.id, level),
-                                      tooltip: 'Ajouter une filière',
+                                ...(faculty.fields[level] ?? []).map((field) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(left: 32),
+                                    child: Column(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(Icons.category,
+                                              size: 20, color: Colors.orange),
+                                          title: Text(
+                                            field,
+                                            style:
+                                                const TextStyle(fontSize: 15),
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.add_circle,
+                                                    color: Color(0xFF2E9366),
+                                                    size: 20),
+                                                onPressed: () => _addUnit(
+                                                    faculty.id, level, field),
+                                                tooltip: 'Ajouter une unité',
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20),
+                                                onPressed: () => _removeField(
+                                                    faculty.id, level, field),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        ...(faculty.units[level]?[field] ?? [])
+                                            .map((unit) {
+                                          return Container(
+                                            margin:
+                                                const EdgeInsets.only(left: 32),
+                                            child: ListTile(
+                                              leading: const Icon(
+                                                  Icons.library_books,
+                                                  size: 18,
+                                                  color: Colors.blue),
+                                              title: Text(
+                                                unit,
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              ),
+                                              trailing: IconButton(
+                                                icon: const Icon(Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 18),
+                                                onPressed: () => _removeUnit(
+                                                    faculty.id,
+                                                    level,
+                                                    field,
+                                                    unit),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ],
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () =>
-                                          _removeLevel(faculty.id, level),
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                }).toList(),
+                              ],
+                            );
+                          }).toList(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            child: ElevatedButton.icon(
+                              onPressed: () => _addLevel(faculty.id),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Ajouter un niveau'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E9366),
+                                foregroundColor: Colors.white,
                               ),
                             ),
-                            ...(faculty.fields[level] ?? []).map((field) {
-                              return Container(
-                                margin: const EdgeInsets.only(left: 32),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: const Icon(Icons.category,
-                                          size: 20, color: Colors.orange),
-                                      title: Text(
-                                        field,
-                                        style: const TextStyle(fontSize: 15),
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.add_circle,
-                                                color: Color(0xFF2E9366),
-                                                size: 20),
-                                            onPressed: () => _addUnit(
-                                                faculty.id, level, field),
-                                            tooltip: 'Ajouter une unité',
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red, size: 20),
-                                            onPressed: () => _removeField(
-                                                faculty.id, level, field),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    ...(faculty.units[level]?[field] ?? [])
-                                        .map((unit) {
-                                      return Container(
-                                        margin: const EdgeInsets.only(left: 32),
-                                        child: ListTile(
-                                          leading: const Icon(
-                                              Icons.library_books,
-                                              size: 18,
-                                              color: Colors.blue),
-                                          title: Text(
-                                            unit,
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                          ),
-                                          trailing: IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red, size: 18),
-                                            onPressed: () => _removeUnit(
-                                                faculty.id, level, field, unit),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        );
-                      }).toList(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: ElevatedButton.icon(
-                          onPressed: () => _addLevel(faculty.id),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Ajouter un niveau'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E9366),
-                            foregroundColor: Colors.white,
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
     );
   }
