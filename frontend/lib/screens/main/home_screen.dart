@@ -1091,7 +1091,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
         color: const Color(0xFF307A59),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
@@ -1101,40 +1101,53 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: AppConstants.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              _currentSectionIcon(),
-              color: const Color(0xFFFFFFFF),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _currentSectionTitle(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Color.fromARGB(255, 255, 255, 255),
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _currentSectionIcon(),
+                        color: const Color(0xFFFFFFFF),
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        _currentSectionTitle(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  _currentSectionSubtitle(user),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.45,
-                    color: Color(0xFF5D7267),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 60),
+                  child: Text(
+                    _currentSectionSubtitle(user),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.45,
+                      color: Color(0xFF5D7267),
+                    ),
                   ),
                 ),
               ],
