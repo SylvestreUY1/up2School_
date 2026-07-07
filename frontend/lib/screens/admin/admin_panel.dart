@@ -11,7 +11,6 @@ import '../../utils/constants.dart';
 import '../../utils/helpers.dart';
 import 'admin_management.dart';
 import 'delegate_management.dart';
-import 'faculty_management.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -198,27 +197,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             icon: Icons.admin_panel_settings,
             onTap: () => _openAdminTool(const AdminManagementScreen()),
           ),
-          _buildActionCard(
-            title: 'Facultés',
-            subtitle: 'Niveaux, filières et unités',
-            icon: Icons.school,
-            onTap: () => _openAdminTool(const FacultyManagementScreen()),
-          ),
         ];
 
         if (constraints.maxWidth >= 760) {
-          return SizedBox(
-            height: 150,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: actions[0]),
-                const SizedBox(width: 12),
-                Expanded(child: actions[1]),
-                const SizedBox(width: 12),
-                Expanded(child: actions[2]),
-              ],
-            ),
+          return Row(
+            children: [
+              Expanded(child: actions[0]),
+              const SizedBox(width: 12),
+              Expanded(child: actions[1]),
+            ],
           );
         }
 
@@ -227,8 +214,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             actions[0],
             const SizedBox(height: 12),
             actions[1],
-            const SizedBox(height: 12),
-            actions[2],
           ],
         );
       },
@@ -284,6 +269,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
