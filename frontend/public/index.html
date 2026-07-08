@@ -6,670 +6,1033 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
     />
-    <title>UY1‑Lib – Partage universitaire multiplateforme</title>
-    <!-- Font Awesome 6 (CDN) -->
+    <title>UY1‑Lib – Bibliothèque étudiante multiplateforme</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Aclonica&family=Lato:wght@400;700;900&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        /* --- Palette conservée de l'original, organisée en tokens --- */
+        --green: #1f6e50;
+        --green-dark: #123d2c;
+        --green-tint: #e7f0ea;
+        --blue: #2c3e66;
+        --blue-tint: #e8ebf3;
+        --gold: #d18f2c;
+        --gold-soft: #ffdf8c;
+        --ink: #1b2a22;
+        --ink-soft: #4a5562;
+        --paper: #fbfaf8;
+        --line: #dfe6e0;
+        --bg-top: #eef2f9;
+        --bg-bottom: #cfddee;
+
+        --serif: "Aclonica", Georgia, serif;
+        --sans:
+          "Source Sans 3", system-ui, "Segoe UI", "Helvetica Neue", Roboto,
+          sans-serif;
+        --mono: "Lato", system-ui, sans-serif;
+      }
+
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
       body {
-        font-family:
-          system-ui, "Segoe UI", "Helvetica Neue", Roboto, sans-serif;
-        background: linear-gradient(145deg, #eef2f9 0%, #cfddee 100%);
+        font-family: var(--sans);
+        color: var(--ink);
+        background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
       }
 
-      /* Carte principale */
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid var(--gold);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+
+      /* ============ CARTE PRINCIPALE — occupe tout l'écran ============ */
       .card {
-        max-width: 980px;
+        flex: 1;
         width: 100%;
-        background: #ffffff;
-        border-radius: 2rem;
-        box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.2);
+        max-width: 1600px;
+        margin: 0 auto;
+        background: var(--paper);
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
         overflow: hidden;
-        padding: 2rem 1.8rem;
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s;
+        animation: rise 0.6s ease both;
+        display: flex;
+        flex-direction: column;
+      }
+      @media (min-width: 720px) {
+        .card {
+          margin: 20px auto;
+          border-radius: 22px;
+          box-shadow: 0 30px 60px -20px rgba(18, 61, 44, 0.35);
+          min-height: calc(100vh - 40px);
+        }
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
-      /* Logo responsive */
-      .logo {
-        width: 85px;
-        height: 85px;
-        background: #1f6e50;
-        border-radius: 50%;
+      /* ---------- En-tête façon "carte d'adhérent" ---------- */
+      .card-header {
+        position: relative;
+        background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+        color: #fff;
+        padding: 30px 28px 22px;
+      }
+      @media (min-width: 960px) {
+        .card-header {
+          padding: 38px 48px 26px;
+        }
+      }
+      @media (min-width: 1280px) {
+        .card-header {
+          padding: 44px 64px 30px;
+        }
+      }
+      /* bord perforé, comme une vraie carte de bibliothèque détachable */
+      .card-header::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -9px;
+        height: 18px;
+        background-image: radial-gradient(
+          circle at 9px 9px,
+          var(--bg-top) 8px,
+          transparent 8.5px
+        );
+        background-size: 26px 18px;
+        background-repeat: repeat-x;
+      }
+
+      .header-top-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .brand-mark {
+        width: 52px;
+        height: 52px;
+        flex: none;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1.5px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1rem auto;
-        box-shadow: 0 12px 20px -8px rgba(31, 110, 80, 0.4);
-        transition: all 0.2s;
       }
-      .logo i {
-        font-size: 44px;
-        color: white;
+      .brand-mark i {
+        font-size: 27px;
       }
-
-      h1 {
-        font-size: clamp(2rem, 8vw, 2.8rem);
-        color: #1f6e50;
-        font-weight: 800;
-        letter-spacing: -0.3px;
-        text-align: center;
-        margin-bottom: 8px;
-        word-break: keep-all;
+      .brand h1 {
+        font-family: var(--serif);
+        font-size: clamp(1.81rem, 6vw, 2.26rem);
+        font-weight: 400;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
       }
-
-      .slogan {
-        font-size: clamp(1rem, 4vw, 1.3rem);
-        color: #3c4b3e;
-        text-align: center;
-        font-weight: 500;
-        border-bottom: 2px solid #1f6e50;
-        display: inline-block;
-        padding-bottom: 6px;
-        margin-bottom: 1.2rem;
-        background: transparent;
+      .brand .tagline {
+        font-family: var(--mono);
+        font-size: 0.77rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.75);
+        margin-top: 4px;
       }
-      .slogan i {
-        color: #1f6e50;
-        margin-right: 6px;
-      }
-
-      /* Zone description */
-      .description {
-        background: #1f6e50;
-        color: white;
-        padding: 1.6rem;
-        border-radius: 1.8rem;
-        margin: 1.8rem 0 1.2rem;
-        box-shadow:
-          inset 0 -2px 0 rgba(0, 0, 0, 0.08),
-          0 8px 14px rgba(0, 0, 0, 0.05);
-      }
-      .description p {
-        font-size: clamp(0.95rem, 3.8vw, 1.1rem);
+      .card-number {
+        font-family: var(--mono);
+        font-size: 0.77rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-align: right;
         line-height: 1.5;
-        margin-bottom: 12px;
+        white-space: nowrap;
+      }
+      .card-number strong {
+        display: block;
+        color: #fff;
+        font-size: 0.96rem;
+        letter-spacing: 0.03em;
+      }
+
+      .slogan-row {
+        margin-top: 20px;
+        font-size: clamp(1.07rem, 3.6vw, 1.19rem);
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.94);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .slogan-row i {
+        color: var(--gold-soft);
+      }
+
+      /* petit "code-barres" décoratif, clin d'œil catalogue de bibliothèque */
+      .barcode {
+        margin-top: 16px;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 22px;
+        opacity: 0.5;
+      }
+      .barcode span {
+        display: block;
+        width: 2px;
+        background: #fff;
+      }
+
+      /* ---------- Corps ---------- */
+      .card-body {
+        flex: 1;
+        padding: 30px 28px 26px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Sur grand écran : deux colonnes pour occuper toute la largeur */
+      @media (min-width: 960px) {
+        .card-body {
+          padding: 44px 48px 34px;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 360px;
+          gap: 0;
+          align-items: start;
+        }
+        .main-col {
+          min-width: 0;
+        }
+        .aside-col {
+          position: sticky;
+          top: 24px;
+          display: flex;
+          flex-direction: column;
+          padding-left: 48px;
+          border-left: 1px solid var(--line);
+        }
+        .footer {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (min-width: 1280px) {
+        .card-body {
+          padding: 56px 64px 40px;
+          grid-template-columns: minmax(0, 1fr) 400px;
+        }
+      }
+
+      .description {
+        color: var(--ink);
+        font-size: 1.11rem;
+        line-height: 1.6;
       }
       .description strong {
-        color: #ffdf8c;
+        color: var(--gold);
         font-weight: 700;
       }
+      .description .lede {
+        font-family: var(--serif);
+        font-size: 1.41rem;
+        font-weight: 400;
+        color: var(--green-dark);
+        display: block;
+        margin-bottom: 8px;
+      }
 
-      /* Grille des fonctionnalités — améliorée pour mobile */
-      .features {
+      /* ---------- Fiche catalogue (fonctionnalités) ---------- */
+      .catalog {
+        margin-top: 26px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .catalog-title {
+        font-family: var(--mono);
+        font-size: 0.77rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        padding: 12px 0 4px;
+      }
+      .catalog-entry {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 0;
+        border-top: 1px dashed var(--line);
+      }
+      .catalog-entry:first-of-type {
+        border-top: none;
+      }
+      .entry-code {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--green-tint);
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.19rem;
+        transition: background 0.2s, color 0.2s;
+      }
+      .catalog-entry:hover .entry-code {
+        background: var(--green);
+        color: #fff;
+      }
+      .entry-text h3 {
+        font-family: var(--mono);
+        font-size: 1.11rem;
+        font-weight: 700;
+        color: var(--green-dark);
+      }
+      .entry-text p {
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+        margin-top: 1px;
+      }
+      .entry-tag {
+        margin-left: auto;
+        flex: none;
+        font-family: var(--mono);
+        font-size: 0.73rem;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 3px 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      /* ---------- À propos / fonctionnalités détaillées ---------- */
+      .about-section {
+        margin-top: 30px;
+        padding-top: 26px;
+        border-top: 1px solid var(--line);
+      }
+      .section-eyebrow {
+        font-family: var(--mono);
+        font-size: 0.77rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--green);
+        font-weight: 700;
+      }
+      .section-title {
+        font-family: var(--serif);
+        font-size: clamp(1.3rem, 4.5vw, 1.58rem);
+        font-weight: 400;
+        color: var(--green-dark);
+        margin-top: 4px;
+        margin-bottom: 12px;
+        line-height: 1.25;
+      }
+      .about-section .catalog {
+        margin-top: 18px;
+      }
+      .about-closing {
+        margin-top: 22px;
+        font-family: var(--serif);
+        font-size: 1.07rem;
+        letter-spacing: 0.01em;
+        color: var(--green-dark);
+        text-align: center;
+        padding-top: 16px;
+        border-top: 1px dashed var(--line);
+      }
+
+      /* ---------- Guide d'utilisation (étapes numérotées) ---------- */
+      .guide {
+        margin-top: 18px;
+      }
+      .guide-step {
+        display: flex;
+        gap: 14px;
+        padding: 16px 0;
+        border-top: 1px dashed var(--line);
+      }
+      .guide-step:first-of-type {
+        border-top: none;
+      }
+      .step-number {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 0.96rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .step-body h3 {
+        font-family: var(--mono);
+        font-size: 1.11rem;
+        font-weight: 700;
+        color: var(--green-dark);
         display: flex;
         flex-wrap: wrap;
-        justify-content: center;
-        gap: 1.2rem;
-        margin: 2rem 0 1.5rem;
+        align-items: center;
+        gap: 8px;
       }
-      .feature-item {
-        flex: 1 1 170px;
-        background: #fefefe;
-        padding: 1.4rem 0.8rem;
-        border-radius: 1.5rem;
-        text-align: center;
-        transition: all 0.25s ease;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+      .step-tag {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 2px 9px;
+        font-weight: 500;
       }
-      .feature-item i {
-        font-size: 2.5rem;
-        color: #1f6e50;
-        margin-bottom: 12px;
-        transition: color 0.2s;
+      .step-body p {
+        font-size: 0.96rem;
+        color: var(--ink-soft);
+        margin-top: 5px;
+        line-height: 1.55;
       }
-      .feature-item h3 {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1b4d3b;
-        margin-bottom: 6px;
+      .step-list {
+        margin-top: 8px;
+        padding-left: 18px;
       }
-      .feature-item p {
-        font-size: 0.85rem;
-        color: #4a5562;
-        line-height: 1.35;
-        margin-top: 6px;
+      .step-list li {
+        font-size: 0.96rem;
+        color: var(--ink-soft);
+        line-height: 1.55;
+        margin-bottom: 5px;
       }
-      /* hover confortable (pas intrusif tactiles) */
-      @media (hover: hover) {
-        .feature-item:hover {
-          background: #1f6e50;
-          transform: translateY(-4px);
-          border-color: #1f6e50;
-        }
-        .feature-item:hover i,
-        .feature-item:hover h3,
-        .feature-item:hover p {
-          color: white;
-        }
+      .step-list li strong {
+        color: var(--ink);
       }
 
-      /* Boutons principaux */
+      /* ---------- Boutons d'action ---------- */
       .cta-buttons {
         display: flex;
         flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-        margin: 1.5rem 0 1rem;
+        gap: 10px;
+        margin: 24px 0 0;
       }
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        background: #1f6e50;
+        gap: 9px;
+        flex: 1 1 200px;
+        background: var(--green);
         color: white;
         text-decoration: none;
-        padding: 14px 24px;
-        border-radius: 60px;
+        padding: 13px 20px;
+        border-radius: 12px;
         font-weight: 700;
-        font-size: 1rem;
-        border: 2px solid #1f6e50;
+        font-size: 1.04rem;
+        border: none;
         transition: all 0.2s ease;
         cursor: pointer;
-        flex: 0 1 auto;
-        backdrop-filter: blur(0px);
       }
       .btn i {
-        font-size: 1.2rem;
-      }
-      .btn-subscribe {
-        background: #2c3e66;
-        border-color: #2c3e66;
-      }
-      .btn-subscribe:hover {
-        background: white;
-        color: #2c3e66;
-        border-color: #2c3e66;
+        font-size: 1.19rem;
       }
       .btn:hover {
-        background: white;
-        color: #1f6e50;
+        background: var(--green-dark);
         transform: translateY(-2px);
-        box-shadow: 0 8px 18px rgba(31, 110, 80, 0.25);
+        box-shadow: 0 10px 20px -8px rgba(31, 110, 80, 0.5);
+      }
+      .btn-subscribe {
+        background: var(--blue);
+      }
+      .btn-subscribe:hover {
+        background: #1e2c49;
+        box-shadow: 0 10px 20px -8px rgba(44, 62, 102, 0.5);
       }
 
-      /* Options multiplateformes (Windows/Linux/Android) */
+      /* ---------- Options de plateforme ---------- */
       .platform-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-        margin: 20px 0 12px;
-        transition: all 0.2s;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition:
+          max-height 0.3s ease,
+          opacity 0.25s ease,
+          margin-top 0.3s ease;
+      }
+      .platform-buttons.open {
+        max-height: 120px;
+        opacity: 1;
       }
       .platform-btn {
-        background: #f0f3f8;
-        color: #1f6e50;
-        border: 1px solid #cbd5e1;
-        padding: 10px 20px;
-        border-radius: 40px;
+        background: var(--paper);
+        color: var(--green-dark);
+        border: 1px solid var(--line);
+        padding: 10px 8px;
+        border-radius: 10px;
         font-weight: 600;
-        display: inline-flex;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         text-decoration: none;
         transition: 0.2s;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
       }
       .platform-btn i {
-        font-size: 1.2rem;
+        font-size: 1.36rem;
+        color: var(--green);
       }
       .platform-btn:hover {
-        background: #1f6e50;
+        background: var(--green);
         color: white;
-        border-color: #1f6e50;
-        transform: translateY(-2px);
+        border-color: var(--green);
       }
-      .hidden {
-        display: none;
+      .platform-btn:hover i {
+        color: white;
       }
 
-      /* Support section (email + WhatsApp) */
+      /* ---------- Support ---------- */
       .support-section {
-        margin: 2.2rem 0 1rem;
-        background: #ffffff;
-        border-radius: 1.8rem;
-        padding: 1.4rem 1.2rem;
-        border-left: 6px solid #1f6e50;
-        box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.08);
+        margin-top: 28px;
+        background: var(--blue-tint);
+        border-radius: 16px;
+        padding: 20px 20px 18px;
       }
       .support-section h3 {
-        font-size: 1.5rem;
-        color: #1f6e50;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 1.3rem;
+        color: var(--blue);
         display: flex;
         align-items: center;
         gap: 8px;
-        border-bottom: 2px solid #e0e7e9;
-        padding-bottom: 8px;
-        margin-bottom: 14px;
-        flex-wrap: wrap;
+        margin-bottom: 4px;
       }
-      .support-section h3 i {
-        font-size: 1.6rem;
+      .support-section > p {
+        font-size: 0.96rem;
+        color: var(--ink-soft);
+        margin-bottom: 14px;
       }
       .support-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.2rem;
-        justify-content: center;
-        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
       }
       .support-card {
-        flex: 1 1 200px;
-        background: #fafcff;
-        border-radius: 1.4rem;
-        padding: 1rem 0.8rem;
+        background: var(--paper);
+        border-radius: 12px;
+        padding: 14px 12px;
         text-align: center;
-        transition: 0.15s;
-        border: 1px solid #dce5f0;
       }
       .support-card i {
-        font-size: 2rem;
-        color: #1f6e50;
-        margin-bottom: 8px;
+        font-size: 1.47rem;
+        color: var(--blue);
+        margin-bottom: 6px;
       }
       .support-label {
-        font-weight: 800;
-        color: #1b4d3b;
-        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink);
+        font-size: 0.96rem;
       }
       .support-value {
-        font-size: 0.95rem;
-        margin-top: 6px;
+        font-size: 0.93rem;
+        margin-top: 4px;
+        word-break: break-word;
       }
       .support-value a {
-        color: #1f6e50;
+        color: var(--blue);
         text-decoration: none;
         font-weight: 600;
-        word-break: break-word;
       }
       .support-value a:hover {
         text-decoration: underline;
       }
+      .support-meta {
+        font-size: 0.77rem;
+        color: var(--ink-soft);
+        margin-top: 5px;
+      }
       .support-hours {
-        margin-top: 20px;
+        margin-top: 14px;
         text-align: center;
-        font-size: 0.85rem;
-        background: #eef3ec;
-        padding: 8px 16px;
-        border-radius: 50px;
-        display: inline-block;
-        width: auto;
-        color: #2c5a46;
-        font-weight: 500;
-      }
-      .support-hours i {
-        margin-right: 6px;
-        color: #d18f2c;
-      }
-
-      /* compteur et footer */
-      .counter-note {
-        text-align: center;
-        font-size: 0.9rem;
-        color: #2c5f4a;
-        margin: 1.2rem 0 0.5rem;
-        font-weight: 500;
-        background: #eef5f0;
-        width: fit-content;
-        padding: 5px 18px;
+        font-family: var(--mono);
+        font-size: 0.81rem;
+        color: var(--blue);
+        background: var(--paper);
+        padding: 7px 14px;
         border-radius: 40px;
+        display: block;
+        width: fit-content;
         margin-left: auto;
         margin-right: auto;
       }
-      .footer {
-        margin-top: 2rem;
-        font-size: 0.8rem;
-        color: #6b7280;
+      .support-hours i {
+        margin-right: 5px;
+        color: var(--gold);
+      }
+      .support-confidential {
+        margin-top: 14px;
+        font-size: 0.85rem;
         text-align: center;
-      }
-      .footer a {
-        color: #1f6e50;
-        text-decoration: none;
-        font-weight: 500;
-        margin: 0 4px;
-      }
-      .footer a:hover {
-        text-decoration: underline;
+        color: var(--ink-soft);
       }
 
-      /* ========== AMÉLIORATIONS SPÉCIFIQUES SMARTPHONE ========== */
-      @media (max-width: 640px) {
-        body {
-          padding: 12px;
+      /* ---------- Compteur + footer ---------- */
+      .counter-note {
+        text-align: center;
+        font-size: 0.96rem;
+        color: var(--green-dark);
+        margin: 22px auto 0;
+        font-weight: 600;
+        background: var(--green-tint);
+        width: fit-content;
+        padding: 6px 18px;
+        border-radius: 40px;
+      }
+      .counter-note strong {
+        color: var(--green);
+      }
+
+      .footer {
+        margin-top: 22px;
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        text-align: center;
+      }
+      .footer nav a {
+        text-decoration: none;
+        font-weight: 500;
+        margin: 0 6px;
+      }
+      .footer nav a:hover {
+        text-decoration: underline;
+        color: var(--green);
+      }
+      .footer .copyright {
+        margin-top: 8px;
+        font-family: var(--mono);
+        font-size: 0.77rem;
+      }
+
+      /* ============ MOBILE ============ */
+      @media (max-width: 480px) {
+        .card-header {
+          padding: 24px 20px 20px;
         }
-        .card {
-          padding: 1.5rem 1.2rem;
-          border-radius: 1.6rem;
+        .card-body {
+          padding: 24px 20px 22px;
         }
-        .logo {
-          width: 70px;
-          height: 70px;
+        .brand h1 {
+          font-size: 1.69rem;
         }
-        .logo i {
-          font-size: 36px;
-        }
-        .slogan {
-          font-size: 0.95rem;
-          margin-bottom: 0.8rem;
-        }
-        .features {
-          gap: 0.9rem;
-          margin: 1.5rem 0;
-        }
-        .feature-item {
-          flex: 1 1 140px;
-          padding: 1rem 0.5rem;
-        }
-        .feature-item i {
-          font-size: 2rem;
-        }
-        .feature-item h3 {
-          font-size: 1rem;
-        }
-        .feature-item p {
-          font-size: 0.75rem;
+        .support-grid {
+          grid-template-columns: 1fr;
         }
         .cta-buttons {
           flex-direction: column;
-          width: 100%;
         }
-        .btn {
-          width: 100%;
-          justify-content: center;
-          padding: 12px 18px;
-          font-size: 0.95rem;
+        .platform-buttons {
+          grid-template-columns: 1fr 1fr 1fr;
         }
-        .support-section h3 {
-          font-size: 1.3rem;
-        }
-        .support-card {
-          flex: 1 1 100%;
-        }
-        .platform-btn {
-          padding: 8px 14px;
-          font-size: 0.85rem;
-        }
-        .description {
-          padding: 1.2rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .features {
-          flex-direction: column;
-          align-items: stretch;
-        }
-        .feature-item {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          text-align: left;
-          padding: 0.9rem 1rem;
-          flex-direction: row;
-          flex-wrap: wrap;
-        }
-        .feature-item i {
-          margin-bottom: 0;
-          font-size: 2rem;
-          width: 48px;
-          text-align: center;
-        }
-        .feature-item .feature-text {
-          flex: 1;
-        }
-        .feature-item h3 {
-          margin-bottom: 2px;
-        }
-        .feature-item p {
-          margin-top: 2px;
-        }
-        /* adaptation du texte aligné à gauche pour lisibilité */
-        .feature-item {
-          justify-content: flex-start;
-        }
-        .support-section {
-          padding: 1rem;
-        }
-        .support-hours {
-          font-size: 0.75rem;
-          padding: 6px 12px;
-        }
-      }
-
-      /* Pour les très petits écrans, ajuster la disposition des features en row/column */
-      @media (max-width: 480px) {
-        .feature-item {
-          flex-direction: row;
-        }
-        .feature-item i {
-          margin-right: 12px;
-        }
-      }
-
-      /* correction mineure pour que le texte dans feature s'affiche bien */
-      .feature-text {
-        display: flex;
-        flex-direction: column;
-      }
-      /* harmonisation */
-      .feature-item .feature-text h3,
-      .feature-item .feature-text p {
-        margin: 0;
-      }
-
-      /* pour le mode responsive avec la classe .feature-text (ajout structure HTML) */
-      .feature-item {
-        transition: all 0.2s;
       }
     </style>
   </head>
   <body>
     <div class="card">
-      <!-- Logo et titre -->
-      <div class="logo">
-        <i class="fas fa-university"></i>
-      </div>
-      <h1>UY1‑Lib</h1>
-      <div style="text-align: center">
-        <div class="slogan">
-          <i class="fas fa-graduation-cap"></i> Bibliothèque étudiante de
-          l'Université de Yaoundé I
-        </div>
-      </div>
-
-      <!-- Accroche -->
-      <div class="description">
-        <p><strong>Plus jamais seul face à vos cours !</strong></p>
-        <p>
-          UY1‑Lib, la plateforme collaborative
-          <strong>multiplateforme</strong> des étudiants UY1.<br />
-          Accédez aux ressources, examens, événements, et échangez avec votre
-          communauté.
-        </p>
-      </div>
-
-      <!-- Bloc fonctionnalités : ICON REMPLACÉE pour "Multiplateforme" + texte actualisé -->
-      <div class="features">
-        <!-- Fichiers de cours -->
-        <div class="feature-item">
-          <i class="fas fa-file-pdf"></i>
-          <div class="feature-text">
-            <h3>Fichiers de cours</h3>
-            <p>PDF, slides, TD – tout pour réussir</p>
-          </div>
-        </div>
-        <!-- Événements -->
-        <div class="feature-item">
-          <i class="fas fa-calendar-alt"></i>
-          <div class="feature-text">
-            <h3>Événements</h3>
-            <p>Conférences, examens, sorties</p>
-          </div>
-        </div>
-        <!-- Communauté -->
-        <div class="feature-item">
-          <i class="fas fa-users"></i>
-          <div class="feature-text">
-            <h3>Communauté</h3>
-            <p>Délégués & entraide active</p>
-          </div>
-        </div>
-        <!-- MULTIPLATEFORME : remplacement total (icône + label) -->
-        <div class="feature-item">
-          <i class="fas fa-layer-group"></i>
-          <!-- icône multiplateforme / cross-platform -->
-          <div class="feature-text">
-            <h3>Multiplateforme</h3>
-            <p>Windows · Linux · Android · iOS (bientôt)</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Boutons d'action -->
-      <div class="cta-buttons">
-        <button id="mainDownloadBtn" class="btn">
-          <i class="fas fa-download"></i> Télécharger l'application
-        </button>
-        <a
-          href="/subscribe-apple.html"
-          id="subscribeBtn"
-          class="btn btn-subscribe"
-        >
-          <i class="fab fa-apple"></i> S'abonner (iOS / macOS)
-        </a>
-      </div>
-
-      <!-- Options de téléchargement : Windows / Linux / Android -->
-      <div id="platformOptions" class="platform-buttons hidden">
-        <a
-          href="https://drive.google.com/uc?export=download&id=1D5nfjDCrTjYfLPV0wtL7ZYT45oMw1C_T"
-          class="platform-btn"
-          target="_blank"
-          rel="noopener"
-        >
-          <i class="fab fa-windows"></i> Windows
-        </a>
-        <a
-          href="https://drive.google.com/uc?export=download&id=1IOH2A-vwnr_0jZwAavBjK77W-fTiDAOQ"
-          class="platform-btn"
-          target="_blank"
-          rel="noopener"
-        >
-          <i class="fab fa-linux"></i> Linux
-        </a>
-        <a
-          href="https://drive.google.com/uc?export=download&id=1c9sWcd_fff2vfxv73kMLyeqZvOb1YSKz"
-          class="platform-btn"
-          target="_blank"
-          rel="noopener"
-        >
-          <i class="fab fa-android"></i> Android
-        </a>
-      </div>
-
-      <!-- Section SUPPORT : Email + WhatsApp uniquement -->
-      <div class="support-section">
-        <h3>
-          <i class="fas fa-headset"></i>
-          Aide & Support UY1‑Lib
-        </h3>
-        <p style="margin-bottom: 12px; color: #2e3b2c; font-weight: 500">
-          <i class="fas fa-life-ring"></i> Une question, un souci technique ?
-          L'équipe vous répond.
-        </p>
-        <div class="support-grid">
-          <div class="support-card">
-            <i class="fas fa-envelope"></i>
-            <div class="support-label">Email prioritaire</div>
-            <div class="support-value">
-              <a href="mailto:up2school237@gmail.com">up2school237@gmail.com</a>
-            </div>
-            <div style="font-size: 0.7rem; margin-top: 6px">
-              Réponse &lt; 24h
+      <!-- En-tête : carte d'adhérent bibliothèque -->
+      <div class="card-header">
+        <div class="header-top-row">
+          <div class="brand">
+            <div class="brand-mark"><i class="fas fa-university"></i></div>
+            <div>
+              <h1>UY1‑Lib</h1>
+              <div class="tagline">Bibliothèque numérique · UY1</div>
             </div>
           </div>
-          <div class="support-card">
-            <i class="fab fa-whatsapp"></i>
-            <div class="support-label">WhatsApp</div>
-            <div class="support-value">
-              <a href="tel:+237650123456">+237 655 892 536</a>
-            </div>
-            <div style="font-size: 0.7rem; margin-top: 6px">7j/7 – 8h–20h</div>
+          <div class="card-number">
+            Carte d'accès n°
+            <strong id="cardNumber">000‑651</strong>
           </div>
         </div>
-        <div style="display: flex; justify-content: center">
-          <div class="support-hours">
-            <i class="far fa-clock"></i> Support officiel : Lundi–Vendredi
-            9h–18h | Samedi 10h–14h
-          </div>
+
+        <div class="slogan-row">
+          <i class="fas fa-graduation-cap"></i>
+          Plus jamais seul face à vos cours
         </div>
-        <p
-          style="
-            margin-top: 18px;
-            font-size: 0.8rem;
-            text-align: center;
-            color: #476b5a;
-          "
-        >
-          <i class="fas fa-shield-alt"></i> Assistance gratuite et
-          confidentielle – réservée aux étudiants UY1
+
+        <div class="barcode" aria-hidden="true" id="barcode"></div>
+      </div>
+
+      <div class="card-body">
+       <div class="main-col">
+        <!-- Accroche -->
+        <p class="description">
+          <span class="lede">La plateforme collaborative des étudiants UY1.</span>
+          Accédez aux <strong>ressources de cours</strong>, aux
+          <strong>examens</strong>, aux <strong>événements</strong>, et
+          échangez avec votre communauté — sur Windows, Linux, Android, et
+          bientôt iOS.
         </p>
-      </div>
 
-      <!-- Statistique/dynamique -->
-      <div class="counter-note">
-        🌟 Déjà utilisé par <strong>+ de 650 étudiants</strong> de l'UY1
-      </div>
+        <!-- Fiche catalogue : fonctionnalités -->
+        <div class="catalog">
+          <div class="catalog-title">Fiche catalogue — ce que propose l'appli</div>
 
-      <!-- Footer -->
-      <div class="footer">
-        <p>
-          <a href="#">À propos</a> • <a href="#">Confidentialité</a> •
-          <a href="#">Contact</a> •
-          <a href="https://uy1.uninet.cm" target="_blank" rel="noopener"
-            >Université de Yaoundé I</a
+          <div class="catalog-entry">
+            <div class="entry-code"><i class="fas fa-file-pdf"></i></div>
+            <div class="entry-text">
+              <h3>Fichiers de cours</h3>
+              <p>PDF, slides, TD — tout pour réussir</p>
+            </div>
+            <span class="entry-tag">Docs</span>
+          </div>
+
+          <div class="catalog-entry">
+            <div class="entry-code"><i class="fas fa-calendar-alt"></i></div>
+            <div class="entry-text">
+              <h3>Événements</h3>
+              <p>Conférences, examens, sorties</p>
+            </div>
+            <span class="entry-tag">Agenda</span>
+          </div>
+
+          <div class="catalog-entry">
+            <div class="entry-code"><i class="fas fa-users"></i></div>
+            <div class="entry-text">
+              <h3>Communauté</h3>
+              <p>Délégués & entraide active</p>
+            </div>
+            <span class="entry-tag">Réseau</span>
+          </div>
+
+          <div class="catalog-entry">
+            <div class="entry-code"><i class="fas fa-layer-group"></i></div>
+            <div class="entry-text">
+              <h3>Multiplateforme</h3>
+              <p>Windows · Linux · Android · iOS (bientôt)</p>
+            </div>
+            <span class="entry-tag">Partout</span>
+          </div>
+        </div>
+
+        <!-- À propos de Up2School -->
+        <div class="about-section">
+          <div class="section-eyebrow">À propos</div>
+          <h2 class="section-title">Up2School — Plateforme académique &amp; distribution de cours</h2>
+          <p class="description">
+            <strong>Up2School</strong> est une application multiplateforme
+            moderne (mobile et bureau), rapide et sécurisée, dédiée à la
+            distribution de fichiers universitaires et au suivi académique.
+            Elle offre une expérience fluide et intuitive, permettant aux
+            étudiants d'accéder facilement à leurs cours et aux dernières
+            annonces, quel que soit l'appareil utilisé — le tout sur une
+            infrastructure robuste garantissant une synchronisation en temps
+            réel, un accès hors ligne optimisé et une sécurité maximale pour
+            les documents éducatifs.
+          </p>
+
+          <!-- Fonctionnalités principales -->
+          <div class="catalog">
+            <div class="catalog-title">Accès aux cours et documents</div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-book"></i></div>
+              <div class="entry-text">
+                <h3>Bibliothèque centralisée</h3>
+                <p>Cours classés par faculté, département ou niveau</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-eye"></i></div>
+              <div class="entry-text">
+                <h3>Visualisation intégrée</h3>
+                <p>PDF et images lisibles directement, sans outil externe</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-cloud-download-alt"></i></div>
+              <div class="entry-text">
+                <h3>Mode hors ligne</h3>
+                <p>Consultations récentes mises en cache, même sans réseau</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-search"></i></div>
+              <div class="entry-text">
+                <h3>Recherche efficace</h3>
+                <p>Retrouvez un cours ou document en quelques secondes</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="catalog">
+            <div class="catalog-title">Communication et alertes</div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-bell"></i></div>
+              <div class="entry-text">
+                <h3>Notifications push</h3>
+                <p>Alertes instantanées pour chaque nouveau document ou annonce</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-bullhorn"></i></div>
+              <div class="entry-text">
+                <h3>Événements et annonces</h3>
+                <p>Actualités, changements d'emploi du temps, vie universitaire</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="catalog">
+            <div class="catalog-title">Profil et abonnements</div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-user-shield"></i></div>
+              <div class="entry-text">
+                <h3>Authentification sécurisée</h3>
+                <p>Accès à vos ressources via un compte personnel protégé</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-credit-card"></i></div>
+              <div class="entry-text">
+                <h3>Gestion des paiements</h3>
+                <p>Renouvellement d'abonnement sécurisé via CinetPay</p>
+              </div>
+            </div>
+
+            <div class="catalog-entry">
+              <div class="entry-code"><i class="fas fa-sync-alt"></i></div>
+              <div class="entry-text">
+                <h3>Suivi multi-appareils</h3>
+                <p>Vos préférences retrouvées sur mobile comme sur ordinateur</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guide d'utilisation détaillé -->
+          <div class="guide">
+            <div class="catalog-title">Guide d'utilisation détaillé</div>
+
+            <div class="guide-step">
+              <div class="step-number">1</div>
+              <div class="step-body">
+                <h3>Premier lancement</h3>
+                <p>
+                  À la première connexion, créez un compte ou connectez‑vous
+                  avec vos identifiants sécurisés, puis complétez votre profil
+                  (faculté, niveau d'études) pour personnaliser votre écran
+                  d'accueil.
+                </p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="step-number">2</div>
+              <div class="step-body">
+                <h3>Accéder à vos cours <span class="step-tag">Section « Cours »</span></h3>
+                <ul class="step-list">
+                  <li><strong>Naviguer</strong> — parcourez les catégories et matières de votre cursus depuis le menu principal.</li>
+                  <li><strong>Ouvrir un document</strong> — cliquez sur un fichier PDF ou image pour l'ouvrir dans le lecteur intégré.</li>
+                  <li><strong>Consultation fluide</strong> — les fichiers ouverts sont optimisés automatiquement pour vos lectures suivantes.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="step-number">3</div>
+              <div class="step-body">
+                <h3>Rester informé <span class="step-tag">Section « Événements »</span></h3>
+                <ul class="step-list">
+                  <li><strong>Alertes en direct</strong> — les notifications signalent chaque nouveauté importante.</li>
+                  <li><strong>Tableau des annonces</strong> — consultez régulièrement la vie académique et les annonces des professeurs.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="step-number">4</div>
+              <div class="step-body">
+                <h3>Gérer son compte et ses paiements <span class="step-tag">Section « Profil »</span></h3>
+                <ul class="step-list">
+                  <li><strong>Abonnements</strong> — vérifiez le statut de votre accès et renouvelez‑le en cas d'expiration.</li>
+                  <li><strong>Paramètres</strong> — gérez vos préférences et les informations de votre profil.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <p class="about-closing">
+            Up2School — conçu pour simplifier votre parcours universitaire
+            avec fiabilité et modernité.
+          </p>
+        </div>
+       </div>
+
+       <div class="aside-col">
+        <!-- Boutons d'action -->
+        <div class="cta-buttons">
+          <button id="mainDownloadBtn" class="btn" aria-expanded="false" aria-controls="platformOptions">
+            <i class="fas fa-download"></i> Télécharger l'application
+          </button>
+          <a href="/subscribe-apple.html" id="subscribeBtn" class="btn btn-subscribe">
+            <i class="fab fa-apple"></i> S'abonner (iOS / macOS)
+          </a>
+        </div>
+
+        <!-- Options Windows / Linux / Android -->
+        <div id="platformOptions" class="platform-buttons">
+          <a
+            href="https://drive.google.com/uc?export=download&id=1D5nfjDCrTjYfLPV0wtL7ZYT45oMw1C_T"
+            class="platform-btn"
+            target="_blank"
+            rel="noopener"
           >
-        </p>
-        <p style="margin-top: 8px">
-          &copy; 2026 UY1‑Lib – Écosystème multiplateforme & mobile
-        </p>
+            <i class="fab fa-windows"></i> Windows
+          </a>
+          <a
+            href="https://drive.google.com/uc?export=download&id=1IOH2A-vwnr_0jZwAavBjK77W-fTiDAOQ"
+            class="platform-btn"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fab fa-linux"></i> Linux
+          </a>
+          <a
+            href="https://drive.google.com/uc?export=download&id=1c9sWcd_fff2vfxv73kMLyeqZvOb1YSKz"
+            class="platform-btn"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fab fa-android"></i> Android
+          </a>
+        </div>
+
+        <!-- Support -->
+        <div class="support-section">
+          <h3><i class="fas fa-headset"></i> Aide & support</h3>
+          <p>Une question, un souci technique ? L'équipe vous répond.</p>
+          <div class="support-grid">
+            <div class="support-card">
+              <i class="fas fa-envelope"></i>
+              <div class="support-label">Email prioritaire</div>
+              <div class="support-value">
+                <a href="mailto:up2school237@gmail.com">up2school237@gmail.com</a>
+              </div>
+              <div class="support-meta">Réponse &lt; 24h</div>
+            </div>
+            <div class="support-card">
+              <i class="fab fa-whatsapp"></i>
+              <div class="support-label">WhatsApp</div>
+              <div class="support-value">
+                <a href="tel:+237692662469">+237 692 662 469</a>
+              </div>
+              <div class="support-meta">7j/7 – 8h–20h</div>
+            </div>
+          </div>
+          <span class="support-hours">
+            <i class="far fa-clock"></i> Support officiel : Lun–Ven 9h–18h · Sam 10h–14h
+          </span>
+          <p class="support-confidential">
+            <i class="fas fa-shield-alt"></i> Assistance gratuite et confidentielle — réservée aux étudiants UY1
+          </p>
+        </div>
+
+        <!-- Statistique -->
+        <div class="counter-note">
+          🌟 Déjà utilisé par <strong>+ de 650 étudiants</strong> de l'UY1
+        </div>
+       </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <nav>
+            <a href="#">À propos</a> • <a href="#">Confidentialité</a> •
+            <a href="#">Contact</a> •
+            <a href="https://uy1.uninet.cm" target="_blank" rel="noopener">Université de Yaoundé I</a>
+          </nav>
+          <p class="copyright">© 2026 UY1‑Lib — écosystème multiplateforme & mobile</p>
+        </div>
       </div>
     </div>
 
     <script>
       (function () {
-        // Gestion du bouton "Télécharger l'application" : affiche/masque Windows/Linux/Android
+        // Toggle des options de plateforme
         const downloadBtn = document.getElementById("mainDownloadBtn");
         const platformOptionsDiv = document.getElementById("platformOptions");
 
         if (downloadBtn && platformOptionsDiv) {
           downloadBtn.addEventListener("click", function (event) {
             event.preventDefault();
-            platformOptionsDiv.classList.toggle("hidden");
+            const isOpen = platformOptionsDiv.classList.toggle("open");
+            downloadBtn.setAttribute("aria-expanded", String(isOpen));
           });
         }
 
-        // Petite amélioration : si l'utilisateur clique sur un support email/whatsapp, pas de conflit
-        // Aucune action supplémentaire requise
+        // Génère un petit "code-barres" décoratif (visuel uniquement)
+        const barcode = document.getElementById("barcode");
+        if (barcode) {
+          const bars = 46;
+          let html = "";
+          for (let i = 0; i < bars; i++) {
+            const h = 8 + Math.round(Math.random() * 14);
+            html += `<span style="height:${h}px"></span>`;
+          }
+          barcode.innerHTML = html;
+        }
       })();
     </script>
   </body>

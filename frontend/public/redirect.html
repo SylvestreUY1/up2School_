@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirection vers UY1-lib</title>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const queryFileId = params.get("file");
+        const pathFileId = window.location.pathname.replace("/partage/", "");
+        const fileId = queryFileId || pathFileId;
+        const deepLink = fileId ? "uy1://partage/" + encodeURIComponent(fileId) : "";
+
+        if (deepLink) {
+            window.location.href = deepLink;
+        }
+
+        window.addEventListener("DOMContentLoaded", function () {
+            const openButton = document.getElementById("openAppButton");
+            if (openButton && deepLink) {
+                openButton.href = deepLink;
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #307A59;
+            color: white;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 20px;
+            background-color: white;
+            color: #307A59;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <p>Redirection vers l'application UY1-lib...</p>
+    <p>Si la redirection ne fonctionne pas automatiquement :</p>
+    <a id="openAppButton" href="#" class="button">Ouvrir dans l'application</a>
+    <p style="margin-top: 30px; font-size: 0.9em;">Si vous n'avez pas l'application, <a href="https://play.google.com/store/apps/details?id=com.example.up2school" style="color: white;">téléchargez-la ici</a>.</p>
+</body>
+</html>

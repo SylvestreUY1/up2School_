@@ -418,7 +418,9 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       return;
     }
 
-    await Clipboard.setData(ClipboardData(text: _effectiveRemoteUrl));
+    await Clipboard.setData(
+      ClipboardData(text: AppHelpers.generateFileShareLink(widget.file.id)),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l10n.linkCopied),

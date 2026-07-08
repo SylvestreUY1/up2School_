@@ -32,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool get _isApplePlatform => AppConfig.isApplePlatform;
 
   bool _useDesktopLayout(BuildContext context) {
-    return AppConfig.isDesktop && MediaQuery.of(context).size.width >= 1100;
+    return MediaQuery.of(context).size.width >= 800;
   }
 
   @override

@@ -11,6 +11,8 @@ import 'constants.dart';
 import '../l10n/app_localizations.dart';
 
 class AppHelpers {
+  static const String fileShareBaseUrl = 'https://up2school-app.web.app';
+
   /// Récupère la locale active de l'application.
   ///
   /// On s'appuie sur `Intl.defaultLocale` afin que les formateurs suivent
@@ -109,6 +111,10 @@ class AppHelpers {
 
   static String formatDateTime(DateTime date) {
     return DateFormat(AppConstants.dateTimeFormat, _activeLocale).format(date);
+  }
+
+  static String generateFileShareLink(String fileId) {
+    return '$fileShareBaseUrl/partage/${Uri.encodeComponent(fileId)}';
   }
 
   // Formatteur de taille de fichier

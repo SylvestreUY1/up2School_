@@ -784,7 +784,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: AppConfig.isDesktop ? 720 : 560,
+          maxWidth: MediaQuery.of(context).size.width >= 800 ? 720 : 560,
         ),
         child: SingleChildScrollView(
           child: Padding(

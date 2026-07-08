@@ -18,6 +18,7 @@ import '../../config/app_config.dart';
 import '../../utils/constants.dart';
 import '../../utils/helpers.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:flutter/services.dart';
 
 class FilesListScreen extends StatefulWidget {
   final String faculty;
@@ -52,7 +53,7 @@ class _FilesListScreenState extends State<FilesListScreen> {
   FileFilter _currentFilter = FileFilter.all;
 
   bool _useDesktopLayout(BuildContext context) {
-    return AppConfig.isDesktop && MediaQuery.of(context).size.width >= 1100;
+    return MediaQuery.of(context).size.width >= 800;
   }
 
   FileManagerService get _fileService => context.read<FileManagerService>();
@@ -315,13 +316,25 @@ class _FilesListScreenState extends State<FilesListScreen> {
 
   // MÉTHODE : génère le lien avec le schéma personnalisé
   String _generateFileLink(FileModel file) {
-    return 'https://uy1-lib.netlify.app/partage/${file.id}';
+    return AppHelpers.generateFileShareLink(file.id);
   }
 
-  // MÉTHODE : partage le lien via share_plus
-  void _shareFileLink(FileModel file) {
+  // MÉTHODE : partage le lien via share_plus ou presse-papiers (PC)
+  void _shareFileLink(FileModel file) async {
     final link = _generateFileLink(file);
-    Share.share(link, subject: context.l10n.shareFileSubject);
+    if (AppConfig.isDesktop) {
+      await Clipboard.setData(ClipboardData(text: link));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.linkCopied),
+            backgroundColor: const Color(0xFF307A59),
+          ),
+        );
+      }
+    } else {
+      Share.share(link, subject: context.l10n.shareFileSubject);
+    }
   }
 
   /// Choisit le meilleur dossier d'export selon la plateforme.

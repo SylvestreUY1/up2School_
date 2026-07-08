@@ -255,11 +255,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   ];
 
   bool _isWideDesktopLayout(BuildContext context) {
-    return AppConfig.isDesktop && MediaQuery.of(context).size.width >= 1100;
+    return MediaQuery.of(context).size.width >= 1024;
   }
 
   bool _useDesktopShell(BuildContext context) {
-    return AppConfig.isDesktop && MediaQuery.of(context).size.width >= 1180;
+    return MediaQuery.of(context).size.width >= 800;
   }
 
   List<String> _documentTypeCodes() => const [

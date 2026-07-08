@@ -33,7 +33,7 @@ class _EventsScreenState extends State<EventsScreen> {
   String? _selectedFilter;
 
   bool _useDesktopLayout(BuildContext context) {
-    return AppConfig.isDesktop && MediaQuery.of(context).size.width >= 1100;
+    return MediaQuery.of(context).size.width >= 800;
   }
 
   Widget _wrapResponsiveContent(BuildContext context, Widget child) {

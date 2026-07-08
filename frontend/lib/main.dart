@@ -1,3 +1,5 @@
+import 'dart:async';
+
 /**
  * FICHIER : main.dart
  * RÔLE : C'est le chef d'orchestre ! Ce fichier démarre toute l'application.
@@ -21,6 +23,7 @@ import 'screens/main/home_screen.dart';
 import 'models/file.dart';
 import 'utils/constants.dart';
 import 'services/backend_storage_service.dart';
+import 'services/deep_link_service.dart';
 import 'services/firebase_storage_service.dart';
 import 'services/storage_service_interface.dart';
 import 'services/file_manager_service.dart';
@@ -83,6 +86,7 @@ void main() async {
       child: const MyApp(),
     ),
   );
+  unawaited(DeepLinkService().init());
 }
 
 /**

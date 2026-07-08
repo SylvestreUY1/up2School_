@@ -18,5 +18,24 @@
         }
       }
     }
+  },
+  "hosting": {
+    "site": "up2school-app",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/partage/**",
+        "destination": "/redirect.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   }
 }

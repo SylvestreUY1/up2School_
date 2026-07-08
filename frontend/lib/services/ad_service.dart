@@ -59,9 +59,28 @@ class AdService {
     return activeAds;
   }
 
+  Future<void> _deleteExpiredFirebaseAds() async {
+    if (!_useFirebaseAds) return;
+
+    try {
+      final snapshot = await _firestore!
+          .collection('ads')
+          .where('endDate', isLessThan: DateTime.now())
+          .get();
+
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+        await LocalAdStorage().deleteAd(doc.id);
+      }
+    } catch (_) {
+      // Best effort: expiry cleanup should not block ad loading.
+    }
+  }
+
   Future<List<AdModel>> _fetchActiveAdsWithCacheFallback(
       {UserModel? user}) async {
     if (_useFirebaseAds) {
+      await _deleteExpiredFirebaseAds();
       final snapshot = await _firestore!
           .collection('ads')
           .where('isActive', isEqualTo: true)
@@ -245,6 +264,7 @@ class AdService {
           .where('isActive', isEqualTo: true)
           .snapshots()
           .asyncMap((snapshot) async {
+        await _deleteExpiredFirebaseAds();
         final ads = snapshot.docs
             .map((doc) => AdModel.fromMap(doc.id, doc.data()))
             .toList();
@@ -263,6 +283,7 @@ class AdService {
   // Récupère TOUTES les publicités (pour l'admin)
   Future<List<AdModel>> getAllAds() async {
     if (_useFirebaseAds) {
+      await _deleteExpiredFirebaseAds();
       final snapshot = await _firestore!
           .collection('ads')
           .orderBy('createdAt', descending: true)

@@ -1630,6 +1630,8 @@ function adMatchesUser(row, user) {
  */
 async function listActiveAdsFromSupabase(req, user = null) {
   const client = ensureSupabase();
+  await deleteExpiredAdsFromSupabase(client);
+
   const { data, error } = await client
     .from(TABLES.ads)
     .select("*")
@@ -1650,9 +1652,106 @@ async function listActiveAdsFromSupabase(req, user = null) {
 }
 
 /**
+ * Supprime durablement les publicités expirées de Supabase et nettoie leurs images R2.
+ */
+async function deleteExpiredAdsFromSupabase(client = ensureSupabase()) {
+  const now = nowIso();
+  const { data, error } = await client
+    .from(TABLES.ads)
+    .select("id, image_url, storage_path")
+    .lt("end_date", now);
+
+  if (error) throw error;
+
+  const expiredAds = data || [];
+  if (expiredAds.length === 0) return 0;
+
+  const expiredIds = expiredAds.map((ad) => ad.id).filter(Boolean);
+  if (expiredIds.length === 0) return 0;
+
+  const { error: deleteError } = await client
+    .from(TABLES.ads)
+    .delete()
+    .in("id", expiredIds);
+
+  if (deleteError) throw deleteError;
+
+  const storagePaths = new Set();
+  for (const ad of expiredAds) {
+    const storagePath = ad.storage_path || extractStoragePathFromUrl(ad.image_url);
+    if (storagePath) storagePaths.add(storagePath);
+  }
+
+  for (const storagePath of storagePaths) {
+    await deleteObjectFromR2(storagePath).catch((error) => {
+      console.warn("Expired ad image cleanup failed:", error.message);
+    });
+  }
+
+  return expiredIds.length;
+}
+
+async function deleteExpiredAdsFromFirestore() {
+  try {
+    const snapshot = await admin
+      .firestore()
+      .collection("ads")
+      .where("endDate", "<", new Date())
+      .get();
+
+    for (const doc of snapshot.docs) {
+      await doc.ref.delete();
+    }
+
+    return snapshot.size;
+  } catch (error) {
+    console.warn("Legacy expired ads cleanup failed:", error.message);
+    return 0;
+  }
+}
+
+async function cleanupExpiredAds() {
+  let deletedCount = 0;
+
+  try {
+    deletedCount += await deleteExpiredAdsFromSupabase();
+  } catch (error) {
+    console.warn("Supabase expired ads cleanup failed:", error.message);
+  }
+
+  deletedCount += await deleteExpiredAdsFromFirestore();
+
+  if (deletedCount > 0) {
+    console.log(`Expired ads cleanup removed ${deletedCount} ad(s).`);
+  }
+
+  return deletedCount;
+}
+
+function startExpiredAdsCleanupScheduler() {
+  const intervalMs = 60 * 60 * 1000;
+
+  cleanupExpiredAds().catch((error) => {
+    console.warn("Initial expired ads cleanup failed:", error.message);
+  });
+
+  const timer = setInterval(() => {
+    cleanupExpiredAds().catch((error) => {
+      console.warn("Scheduled expired ads cleanup failed:", error.message);
+    });
+  }, intervalMs);
+
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+}
+
+/**
  * Liste les publicités actives depuis l'ancien système Firestore
  */
 async function listActiveAdsFromFirestore(req, user = null) {
+  await deleteExpiredAdsFromFirestore();
+
   const snapshot = await admin
     .firestore()
     .collection("ads")
@@ -3776,6 +3875,8 @@ app.get("/api/ads/active", tryVerifyToken, async (req, res) => {
 app.get("/api/ads", verifyToken, requireAdmin, async (req, res) => {
   try {
     const client = ensureSupabase();
+    await deleteExpiredAdsFromSupabase(client);
+
     const { data, error } = await client
       .from(TABLES.ads)
       .select("*")
@@ -3813,6 +3914,8 @@ app.get("/api/ads", tryVerifyToken, async (req, res) => {
 
     if (isAdmin) {
       const client = ensureSupabase();
+      await deleteExpiredAdsFromSupabase(client);
+
       const { data, error } = await client.from(TABLES.ads).select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return res.json((data || []).map((row) => adResponse(req, row)));
@@ -4022,6 +4125,7 @@ server.listen(PORT, "0.0.0.0", () => {
   📦 Supabase : ${supabaseUrl ? "Connecté" : "Non configuré"}
   ☁️  R2 Bucket : ${r2BucketName || "Non configuré"}
   `);
+  startExpiredAdsCleanupScheduler();
 });
 
 module.exports = app;
