@@ -114,3 +114,6 @@ inno_bundle:
   publisher: Up2School
   executable_name: UY1-Lib.exe
   setup_icon: "windows/runner/resources/app_icon.ico"
+  languages:
+    - en
+    - fr
