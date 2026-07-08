@@ -30,11 +30,17 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Windows
-        run: flutter build windows --release
+      - name: Generate App Icons
+        run: dart run flutter_launcher_icons
+
+      - name: Build Windows Installer
+        run: dart run inno_bundle
+
+      - name: Rename Installer
+        run: Rename-Item -Path "build\windows\x64\installer\Release\*.exe" -NewName "UY1-Lib.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: frontend/build/windows/x64/runner/Release/
+          name: windows-installer
+          path: frontend/build/windows/x64/installer/Release/

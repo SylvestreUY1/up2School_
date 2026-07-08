@@ -63,6 +63,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   hive_generator: ^2.0.0
   build_runner: ^2.3.3
+  inno_bundle: ^1.0.3
 
   # share link
   app_links: ^6.0.0
@@ -106,3 +107,10 @@ hooks:
     sqlite3:
       source: system
       name: sqlite3
+
+inno_bundle:
+  id: b8e7c12f-6825-4c07-9b2f-48d88414457e
+  name: UY1-Lib
+  publisher: Up2School
+  executable_name: UY1-Lib.exe
+  setup_icon: "windows/runner/resources/app_icon.ico"
