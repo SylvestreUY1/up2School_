@@ -115,5 +115,5 @@ inno_bundle:
   executable_name: UY1-Lib.exe
   setup_icon: "windows/runner/resources/app_icon.ico"
   languages:
-    - en
-    - fr
+    - english
+    - french
