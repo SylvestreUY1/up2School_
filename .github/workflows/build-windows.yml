@@ -34,7 +34,7 @@ jobs:
         run: dart run flutter_launcher_icons
 
       - name: Build Windows Installer
-        run: dart run inno_bundle
+        run: dart run inno_bundle:build
 
       - name: Rename Installer
         run: Rename-Item -Path "build\windows\x64\installer\Release\*.exe" -NewName "UY1-Lib.exe"
