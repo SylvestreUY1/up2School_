@@ -1788,10 +1788,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }) {
     return Card(
       elevation: 2,
-      child: Center(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _selectFaculty(fullName),
         child: ListTile(
           dense: true,
-          onTap: () => _selectFaculty(fullName),
           leading: Container(
             width: 52,
             height: 52,
@@ -1827,10 +1828,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildLevelCard(String level) {
     return Card(
       elevation: 2,
-      child: Center(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _selectLevel(level),
         child: ListTile(
           dense: true,
-          onTap: () => _selectLevel(level),
           leading: Container(
             width: 50,
             height: 50,
@@ -1865,10 +1867,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildFieldCard(String field) {
     return Card(
       elevation: 2,
-      child: Center(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _selectField(field),
         child: ListTile(
           dense: true,
-          onTap: () => _selectField(field),
           leading: Container(
             width: 50,
             height: 50,
@@ -1898,10 +1901,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildUnitCard(String unit) {
     return Card(
       elevation: 2,
-      child: Center(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _selectUnit(unit),
         child: ListTile(
           dense: true,
-          onTap: () => _selectUnit(unit),
           leading: Container(
             width: 50,
             height: 50,
@@ -1970,13 +1974,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Card(
       elevation: 2,
-      child: Center(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          _updateLastActivity(); // Mise à jour avant navigation
+          _navigateToDocumentType(type);
+        },
         child: ListTile(
           dense: true,
-          onTap: () {
-            _updateLastActivity(); // Mise à jour avant navigation
-            _navigateToDocumentType(type);
-          },
           leading: Container(
             width: 50,
             height: 50,

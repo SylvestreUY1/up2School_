@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -6,6 +8,7 @@ import '../../models/faculty.dart';
 import '../../models/default_faculties.dart';
 import '../../l10n/app_localizations.dart';
 import 'auth_form_theme.dart';
+import 'login_screen.dart';
 import '../../utils/helpers.dart';
 
 /// Écran d'inscription.
@@ -26,6 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
+
+  bool _useGoogleSignUp = false;
+  bool _googlePrefilled = false;
 
   List<Faculty> _faculties = sanitizeFaculties(getFallbackFaculties());
   String? _selectedFaculty;
@@ -106,14 +112,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.register(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        name: _nameController.text.trim(),
-        faculty: _selectedFaculty!,
-        level: _selectedLevel!,
-        field: _selectedField!,
-      );
+      if (_useGoogleSignUp) {
+        await authProvider.registerWithGoogle(
+          name: _nameController.text.trim(),
+          faculty: _selectedFaculty!,
+          level: _selectedLevel!,
+          field: _selectedField!,
+        );
+      } else {
+        await authProvider.register(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          name: _nameController.text.trim(),
+          faculty: _selectedFaculty!,
+          level: _selectedLevel!,
+          field: _selectedField!,
+        );
+      }
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
       }
@@ -136,9 +151,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _startGoogleSignUp() async {
+    final l10n = context.l10n;
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final data = await authProvider.beginGoogleRegistration();
+      if (!mounted) return;
+
+      final email = (data['email'] ?? '').trim();
+      final displayName = (data['displayName'] ?? '').trim();
+
+      setState(() {
+        _useGoogleSignUp = true;
+        _googlePrefilled = true;
+        if (email.isNotEmpty) {
+          _emailController.text = email;
+        }
+        if (_nameController.text.trim().isEmpty && displayName.isNotEmpty) {
+          _nameController.text = displayName;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppHelpers.userFriendlyErrorMessage(
+              e,
+              fallback: l10n.registerErrorDefault,
+            ),
+          ),
+          backgroundColor: const Color.fromARGB(255, 255, 162, 155),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _switchBackToEmailSignUp() {
+    setState(() {
+      _useGoogleSignUp = false;
+      _googlePrefilled = false;
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmPasswordController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
+    final canGoogleSignUp = !(Platform.isLinux || Platform.isWindows);
 
     return Scaffold(
       appBar: AppBar(
@@ -157,133 +226,219 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         // AJOUTER SafeArea
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                Text(
-                  l10n.register,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.fullName,
-                    icon: Icons.person,
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterFullName;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.email,
-                    icon: Icons.email,
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterEmail;
-                    }
-                    if (!value.contains('@') || !value.contains('.')) {
-                      return l10n.invalidEmail;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.password,
-                    icon: Icons.lock,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.white.withOpacity(0.7),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWideDesktop ? 820 : double.infinity,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 20),
+                      Text(
+                        l10n.register,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  obscureText: _obscurePassword,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterNewPassword;
-                    }
-                    if (value.length < 6) {
-                      return l10n.passwordTooShort;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.confirmPassword,
-                    icon: Icons.lock,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.white.withOpacity(0.7),
+                      const SizedBox(height: 30),
+                      if (!_useGoogleSignUp)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: (_isLoading || !canGoogleSignUp)
+                                ? null
+                                : _startGoogleSignUp,
+                            icon: const Icon(Icons.g_mobiledata, size: 30),
+                            label: Text(
+                              canGoogleSignUp
+                                  ? 'Continuer avec Google'
+                                  : 'Google (non disponible sur Desktop)',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black87,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (!_useGoogleSignUp) const SizedBox(height: 20),
+                      if (_useGoogleSignUp && _googlePrefilled) ...[
+                        AppHelpers.buildInfoBanner(
+                          message:
+                              'Compte Google sélectionné. Il ne reste que votre nom et les infos académiques.',
+                          icon: Icons.verified_user_outlined,
+                          color: const Color(0xFF2E9366),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed:
+                                    _isLoading ? null : _startGoogleSignUp,
+                                style: TextButton.styleFrom(
+                                  overlayColor: Colors.white.withOpacity(0.1),
+                                ),
+                                child: const Text(
+                                  'Changer de compte Google',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : _switchBackToEmailSignUp,
+                                style: TextButton.styleFrom(
+                                  overlayColor: Colors.white.withOpacity(0.1),
+                                ),
+                                child: const Text(
+                                  'Inscription avec email',
+                                  style: TextStyle(
+                                    color: Color(0xFF222222),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: AuthFormTheme.inputDecoration(
+                          label: l10n.fullName,
+                          icon: Icons.person,
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        cursorColor: Colors.white,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return l10n.enterFullName;
+                          }
+                          return null;
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  obscureText: _obscureConfirmPassword,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.confirmYourPassword;
-                    }
-                    if (value != _passwordController.text) {
-                      return l10n.passwordsDoNotMatch;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 30),
-                Text(
-                  l10n.academicInformation,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: AuthFormTheme.inputDecoration(
+                          label: l10n.email,
+                          icon: Icons.email,
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        cursorColor: Colors.white,
+                        readOnly: _useGoogleSignUp,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return l10n.enterEmail;
+                          }
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return l10n.invalidEmail;
+                          }
+                          return null;
+                        },
+                      ),
+                      if (!_useGoogleSignUp) ...[
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: AuthFormTheme.inputDecoration(
+                            label: l10n.password,
+                            icon: Icons.lock,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          cursorColor: Colors.white,
+                          obscureText: _obscurePassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return l10n.enterNewPassword;
+                            }
+                            if (value.length < 6) {
+                              return l10n.passwordTooShort;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          decoration: AuthFormTheme.inputDecoration(
+                            label: l10n.confirmPassword,
+                            icon: Icons.lock,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                            ),
+                          ),
+                          style: const TextStyle(color: Colors.white),
+                          cursorColor: Colors.white,
+                          obscureText: _obscureConfirmPassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return l10n.confirmYourPassword;
+                            }
+                            if (value != _passwordController.text) {
+                              return l10n.passwordsDoNotMatch;
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 30),
+                      Text(
+                        l10n.academicInformation,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                 // SECTION FACULTÉ
                 if (_loadingFaculties)
@@ -419,65 +574,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : ElevatedButton(
-                          onPressed: _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E9366),
-                            foregroundColor:
-                                const Color.fromARGB(255, 255, 255, 255),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: _isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : ElevatedButton(
+                                onPressed: _register,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2E9366),
+                                  foregroundColor: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: Text(
+                                  l10n.signUp,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                            return;
+                          }
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
                             ),
-                          ),
-                          child: Text(
-                            l10n.signUp,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          overlayColor: Colors.white.withOpacity(0.1),
+                        ),
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${l10n.alreadyHaveAccount} ',
+                                style: const TextStyle(
+                                  color: Color(0xFF222222),
+                                ),
+                              ),
+                              TextSpan(
+                                text: l10n.signIn,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                  style: TextButton.styleFrom(
-                    overlayColor: Colors.white.withOpacity(0.1),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${l10n.alreadyHaveAccount} ',
-                          style: const TextStyle(
-                            color: Color(0xFF222222),
-                          ),
-                        ),
-                        TextSpan(
-                          text: l10n.signIn,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

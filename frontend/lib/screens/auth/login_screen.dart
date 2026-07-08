@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
@@ -67,9 +69,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signInWithGoogle();
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      final message = AppHelpers.userFriendlyErrorMessage(
+        e,
+        fallback: 'Erreur de connexion avec Google',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppConstants.errorColor,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
+    final canGoogleSignIn = !(Platform.isLinux || Platform.isWindows);
 
     return Scaffold(
       appBar: AppBar(
@@ -84,161 +115,197 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  l10n.login,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.email,
-                    icon: Icons.email,
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterEmail;
-                    }
-                    if (!value.contains('@') || !value.contains('.')) {
-                      return l10n.invalidEmail;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: AuthFormTheme.inputDecoration(
-                    label: l10n.password,
-                    icon: Icons.lock,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.white.withOpacity(0.7),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWideDesktop ? 820 : double.infinity,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      l10n.login,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
+                    ),
+                    const SizedBox(height: 30),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: AuthFormTheme.inputDecoration(
+                        label: l10n.email,
+                        icon: Icons.email,
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return l10n.enterEmail;
+                        }
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return l10n.invalidEmail;
+                        }
+                        return null;
                       },
                     ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  obscureText: _obscurePassword,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterPassword;
-                    }
-                    if (value.length < 6) {
-                      return l10n.passwordTooShort;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: AuthFormTheme.inputDecoration(
+                        label: l10n.password,
+                        icon: Icons.lock,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.white.withOpacity(0.7),
                           ),
-                        )
-                      : ElevatedButton(
-                          onPressed: _signIn,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E9366),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      obscureText: _obscurePassword,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return l10n.enterPassword;
+                        }
+                        if (value.length < 6) {
+                          return l10n.passwordTooShort;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : ElevatedButton(
+                              onPressed: _signIn,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E9366),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.signIn,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            l10n.signIn,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: _isLoading
+                          ? const SizedBox()
+                          : ElevatedButton.icon(
+                              onPressed: canGoogleSignIn ? _signInWithGoogle : null,
+                              icon: const Icon(Icons.g_mobiledata, size: 30),
+                              label: Text(
+                                canGoogleSignIn
+                                    ? 'Continuer avec Google'
+                                    : 'Google (non disponible sur Desktop)',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black87,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
                             ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          overlayColor: Colors.white.withOpacity(0.1),
+                        ),
+                        child: Text(
+                          l10n.forgotPassword,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
                         ),
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForgotPasswordScreen()),
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      overlayColor: Colors.white.withOpacity(0.1),
-                    ),
-                    child: Text(
-                      l10n.forgotPassword,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
+                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        overlayColor: Colors.white.withOpacity(0.1),
                       ),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    overlayColor: Colors.white.withOpacity(0.1),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${l10n.noAccountYet} ',
-                          style: const TextStyle(
-                            color: Color(0xFF222222), // En noir
-                          ),
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${l10n.noAccountYet} ',
+                              style: const TextStyle(
+                                color: Color(0xFF222222), // En noir
+                              ),
+                            ),
+                            TextSpan(
+                              text: l10n.signUp,
+                              style: const TextStyle(
+                                color: Colors.white, // En blanc
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        TextSpan(
-                          text: l10n.signUp,
-                          style: const TextStyle(
-                            color: Colors.white, // En blanc
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

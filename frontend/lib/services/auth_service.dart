@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,6 +32,7 @@ class AuthService {
 
   static final AuthService _instance = AuthService._internal();
   static const _cachedFirebaseUserKey = 'cached_firebase_user_payload';
+  static Future<void>? _googleSignInInit;
 
   FirebaseAuth? _auth;
   FirebaseMessaging? _fcm;
@@ -173,6 +175,178 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthError(e);
     }
+  }
+
+  Future<UserModel?> signInWithGoogle() async {
+    if (!AppConfig.useFirebaseDataLayer) {
+      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
+    }
+
+    // google_sign_in n'est pas supporté sur Linux/Windows.
+    if (Platform.isLinux || Platform.isWindows) {
+      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment. Utilisez plutôt email/mot de passe.';
+    }
+
+    try {
+      // google_sign_in v7+: singleton + initialize() required.
+      _googleSignInInit ??= GoogleSignIn.instance.initialize();
+      await _googleSignInInit;
+
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
+
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth!.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) throw 'Erreur de connexion avec Google';
+
+      UserModel? userModel;
+      try {
+        userModel = await _resolveFirebaseUserProfile(firebaseUser);
+      } catch (e) {
+        print('[AUTH] Profil introuvable pour Google Sign-In, création... $e');
+      }
+
+      if (userModel == null) {
+        // Créer un nouveau profil
+        final newUserMap = {
+          'email': firebaseUser.email ?? googleUser.email,
+          'name': firebaseUser.displayName ?? googleUser.displayName ?? 'Utilisateur',
+          'role': UserRole.student.toString().split('.').last,
+          'faculty': '',
+          'level': '',
+          'field': '',
+          'createdAt': DateTime.now().toIso8601String(),
+        };
+
+        userModel = await _backendApi.updateUserProfile(firebaseUser.uid, newUserMap);
+        await _cacheFirebaseUser(userModel);
+      }
+      
+      await _persistMobileBackendSession(email: userModel.email, password: ''); // Pas de mdp pour Google Auth
+      print('[AUTH] Google Sign-In réussi pour ${userModel.email}');
+      return userModel;
+    } on FirebaseAuthException catch (e) {
+      throw _handleFirebaseAuthError(e);
+    } catch (e) {
+      throw 'Erreur Google Sign-In: $e';
+    }
+  }
+
+  /// Démarre une inscription Google sur mobile:
+  /// - Authentifie via Google
+  /// - Connecte Firebase
+  /// - Retourne uniquement les infos de base (email/nom) pour pré-remplir l'UI
+  ///   sans créer/compléter le profil backend.
+  Future<Map<String, String?>> beginGoogleRegistration() async {
+    if (!AppConfig.useFirebaseDataLayer) {
+      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
+    }
+
+    if (Platform.isLinux || Platform.isWindows) {
+      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
+    }
+
+    _googleSignInInit ??= GoogleSignIn.instance.initialize();
+    await _googleSignInInit;
+
+    final GoogleSignInAccount googleUser =
+        await GoogleSignIn.instance.authenticate();
+    final googleAuth = googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+    final userCredential = await _auth!.signInWithCredential(credential);
+
+    final firebaseUser = userCredential.user;
+    if (firebaseUser == null) {
+      throw 'Erreur de connexion avec Google';
+    }
+
+    return {
+      'email': firebaseUser.email ?? googleUser.email,
+      'displayName': firebaseUser.displayName ?? googleUser.displayName,
+    };
+  }
+
+  /// Finalise l'inscription Google:
+  /// - Utilise l'utilisateur Firebase déjà authentifié (ou relance l'auth Google)
+  /// - Crée/complète le profil backend avec le parcours académique
+  Future<UserModel?> completeGoogleRegistration({
+    required String name,
+    required String faculty,
+    required String level,
+    required String field,
+  }) async {
+    if (!AppConfig.useFirebaseDataLayer) {
+      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
+    }
+
+    if (Platform.isLinux || Platform.isWindows) {
+      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
+    }
+
+    var firebaseUser = _auth?.currentUser;
+    GoogleSignInAccount? googleUser;
+
+    if (firebaseUser == null) {
+      _googleSignInInit ??= GoogleSignIn.instance.initialize();
+      await _googleSignInInit;
+      googleUser = await GoogleSignIn.instance.authenticate();
+      final googleAuth = googleUser.authentication;
+      final credential =
+          GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+      final userCredential = await _auth!.signInWithCredential(credential);
+      firebaseUser = userCredential.user;
+    }
+
+    if (firebaseUser == null) {
+      throw 'Erreur de connexion avec Google';
+    }
+
+    UserModel? userModel;
+    try {
+      userModel = await _resolveFirebaseUserProfile(firebaseUser);
+    } catch (_) {
+      userModel = null;
+    }
+
+    final email = firebaseUser.email ?? googleUser?.email ?? '';
+    final displayName = (name.trim().isNotEmpty
+        ? name.trim()
+        : (firebaseUser.displayName ??
+            googleUser?.displayName ??
+            'Utilisateur'));
+
+    if (userModel == null) {
+      final newUserMap = {
+        'email': email,
+        'name': displayName,
+        'role': UserRole.student.toString().split('.').last,
+        'faculty': faculty,
+        'level': level,
+        'field': field,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+      userModel =
+          await _backendApi.updateUserProfile(firebaseUser.uid, newUserMap);
+      await _cacheFirebaseUser(userModel);
+    } else {
+      userModel = await _backendApi.updateUserProfile(firebaseUser.uid, {
+        'email': email,
+        'name': displayName,
+        'faculty': faculty,
+        'level': level,
+        'field': field,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+      await _cacheFirebaseUser(userModel);
+    }
+
+    await _persistMobileBackendSession(email: userModel.email, password: '');
+    return userModel;
   }
 
   Future<UserModel?> registerWithEmail({

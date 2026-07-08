@@ -71,6 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,64 +81,75 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 30),
-              Text(
-                l10n.enterYourEmail,
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              TextFormField(
-                controller: _emailController,
-                style: const TextStyle(color: Colors.white),
-                cursorColor: Colors.white,
-                decoration: AuthFormTheme.inputDecoration(
-                  label: l10n.email,
-                  icon: Icons.email,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.enterEmail;
-                  }
-                  if (!value.contains('@') || !value.contains('.')) {
-                    return l10n.invalidEmail;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                height: 50,
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
-                    : ElevatedButton(
-                        onPressed: _sendResetEmail,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E9366),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          l10n.send,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+      body: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWideDesktop ? 820 : double.infinity,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 30),
+                    Text(
+                      l10n.enterYourEmail,
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+                    TextFormField(
+                      controller: _emailController,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: AuthFormTheme.inputDecoration(
+                        label: l10n.email,
+                        icon: Icons.email,
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return l10n.enterEmail;
+                        }
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return l10n.invalidEmail;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      height: 50,
+                      child: _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : ElevatedButton(
+                              onPressed: _sendResetEmail,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E9366),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.send,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -126,6 +126,68 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    _isLoading = true;
+    _safeNotifyListeners();
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (user != null) {
+        _currentUser = user;
+        final refreshed = await _authService.refreshCurrentUserProfile();
+        if (refreshed != null) {
+          _currentUser = refreshed;
+        }
+        unawaited(_syncNotificationState(user));
+      }
+    } finally {
+      _isLoading = false;
+      _safeNotifyListeners();
+    }
+  }
+
+  /// Utilisé par l'écran d'inscription:
+  /// on authentifie Google/Firebase puis on pré-remplit l'UI.
+  Future<Map<String, String?>> beginGoogleRegistration() async {
+    _isLoading = true;
+    _safeNotifyListeners();
+
+    try {
+      return await _authService.beginGoogleRegistration();
+    } finally {
+      _isLoading = false;
+      _safeNotifyListeners();
+    }
+  }
+
+  /// Finalise l'inscription après Google: on complète le profil backend
+  /// avec le nom + les infos académiques.
+  Future<void> registerWithGoogle({
+    required String name,
+    required String faculty,
+    required String level,
+    required String field,
+  }) async {
+    _isLoading = true;
+    _safeNotifyListeners();
+
+    try {
+      final user = await _authService.completeGoogleRegistration(
+        name: name,
+        faculty: faculty,
+        level: level,
+        field: field,
+      );
+      if (user != null) {
+        _currentUser = user;
+        unawaited(_syncNotificationState(user));
+      }
+    } finally {
+      _isLoading = false;
+      _safeNotifyListeners();
+    }
+  }
+
   Future<void> register({
     required String email,
     required String password,
