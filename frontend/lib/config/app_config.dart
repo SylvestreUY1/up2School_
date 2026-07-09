@@ -72,12 +72,12 @@ class AppConfig {
   static bool get useBackendForProtectedFiles => useBackendStorage;
 
   // Certaines plateformes ont besoin que Firebase soit allumé au démarrage
+  // Note: Firebase Core n'a pas de plugin natif pour Linux/Windows, donc on l'initialise
+  // uniquement sur mobile et macOS
   static bool get requiresFirebaseInitialization =>
       Platform.isAndroid ||
       Platform.isIOS ||
-      Platform.isMacOS ||
-      Platform.isLinux ||
-      Platform.isWindows;
+      Platform.isMacOS;
 
   // Est-ce qu'on peut recevoir des messages Firebase ?
   static bool get usesFirebaseMessaging =>
