@@ -233,9 +233,6 @@ class AuthService {
   }
 
   Future<UserModel?> signInWithGoogle() async {
-    if (Platform.isLinux || Platform.isWindows) {
-      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment. Utilisez plutôt email/mot de passe.';
-    }
 
     _auth ??= FirebaseAuth.instance;
 
@@ -288,16 +285,12 @@ class AuthService {
     }
   }
 
-  /// Démarre une inscription Google sur mobile:
+  /// Démarre une inscription Google:
   /// - Authentifie via Google
   /// - Connecte Firebase
   /// - Retourne uniquement les infos de base (email/nom) pour pré-remplir l'UI
   ///   sans créer/compléter le profil backend.
   Future<Map<String, String?>> beginGoogleRegistration() async {
-    if (Platform.isLinux || Platform.isWindows) {
-      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
-    }
-
     _auth ??= FirebaseAuth.instance;
 
     final googleUser = await _acquireGoogleAccount();
@@ -327,9 +320,6 @@ class AuthService {
     required String level,
     required String field,
   }) async {
-    if (Platform.isLinux || Platform.isWindows) {
-      throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
-    }
 
     _auth ??= FirebaseAuth.instance;
 

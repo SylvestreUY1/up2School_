@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
-    final canGoogleSignIn = !(Platform.isLinux || Platform.isWindows);
+    final canGoogleSignIn = true;
 
     return Scaffold(
       appBar: AppBar(

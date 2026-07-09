@@ -37,14 +37,13 @@ class FileModelAdapter extends TypeAdapter<FileModel> {
       localPath: fields[19] as String?,
       size: fields[10] as int?,
       viewedBy: (fields[14] as List).cast<String>(),
-      storagePath: fields[20] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FileModel obj) {
     writer
-      ..writeByte(21)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -84,9 +83,7 @@ class FileModelAdapter extends TypeAdapter<FileModel> {
       ..writeByte(18)
       ..write(obj.lastOpened)
       ..writeByte(19)
-      ..write(obj.localPath)
-      ..writeByte(20)
-      ..write(obj.storagePath);
+      ..write(obj.localPath);
   }
 
   @override
