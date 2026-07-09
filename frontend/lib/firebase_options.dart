@@ -49,7 +49,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCRhXsylT2YdP_80ZTpSHngMW8yhPRcalw',
-    appId: '1:846269435063:android:edc094d92f1d7c7e5a5132',
+    appId: '1:846269435063:android:82cb3b492197ff6c5a5132',
     messagingSenderId: '846269435063',
     projectId: 'up2school-app',
     storageBucket: 'up2school-app.firebasestorage.app',

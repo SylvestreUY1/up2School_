@@ -86,9 +86,34 @@ class AppHelpers {
     if (normalized.contains('not found') ||
         normalized.contains('introuvable') ||
         normalized.contains('inaccessible')) {
+      if (normalized.contains('profil utilisateur') ||
+          normalized.contains('user profile') ||
+          normalized.contains('backend')) {
+        return _isFrenchLocale
+            ? 'Compte créé, mais le profil serveur est introuvable. Réessayez ou contactez le support.'
+            : 'Account created, but the server profile was not found. Try again or contact support.';
+      }
       return _isFrenchLocale
           ? 'Élément introuvable. Actualisez la page puis réessayez.'
           : 'Item not found. Refresh the page and try again.';
+    }
+
+    if (normalized.contains('serverclientid') ||
+        normalized.contains('credentialmanager') ||
+        normalized.contains('google sign-in') ||
+        normalized.contains('google_sign_in') ||
+        normalized.contains('sign_in_failed') ||
+        normalized.contains('sign_in_canceled')) {
+      return _isFrenchLocale
+          ? 'La connexion avec Google a échoué. Réessayez dans quelques instants ou utilisez la connexion par email.'
+          : 'Google sign-in failed. Try again in a moment or sign in with email.';
+    }
+
+    if (normalized.contains('met trop de temps') ||
+        normalized.contains('takes too long')) {
+      return _isFrenchLocale
+          ? 'Le serveur met trop de temps à répondre. Réessayez dans quelques secondes.'
+          : 'The server is taking too long to respond. Try again in a few seconds.';
     }
 
     if (normalized.contains('storage') ||

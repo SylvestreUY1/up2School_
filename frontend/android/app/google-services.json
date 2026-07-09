@@ -9,10 +9,15 @@
       "client_info": {
         "mobilesdk_app_id": "1:846269435063:android:edc094d92f1d7c7e5a5132",
         "android_client_info": {
-          "package_name": "com.up2school"
+          "package_name": "com.example.up2school"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "846269435063-cbsj8fhcou2ojhsgspni5o5c1b3n047n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCRhXsylT2YdP_80ZTpSHngMW8yhPRcalw"
@@ -20,7 +25,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846269435063-cbsj8fhcou2ojhsgspni5o5c1b3n047n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "846269435063-aloc2640d095nh4ih9dpd9gf83nulk65.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.up2school"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846269435063:android:82cb3b492197ff6c5a5132",
+        "android_client_info": {
+          "package_name": "com.up2school"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "846269435063-ip559vt42ohargul6ad4p0ka6r5g0atp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.up2school",
+            "certificate_hash": "3f1420886917b0a6045ec195e685a7f4effb8ecf"
+          }
+        },
+        {
+          "client_id": "846269435063-cbsj8fhcou2ojhsgspni5o5c1b3n047n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRhXsylT2YdP_80ZTpSHngMW8yhPRcalw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846269435063-cbsj8fhcou2ojhsgspni5o5c1b3n047n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "846269435063-aloc2640d095nh4ih9dpd9gf83nulk65.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.up2school"
+              }
+            }
+          ]
         }
       }
     }

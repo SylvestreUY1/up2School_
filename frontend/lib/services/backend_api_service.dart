@@ -180,10 +180,6 @@ class BackendApiService {
   }
 
   Future<String?> _getFirebaseIdToken({bool forceRefresh = false}) async {
-    if (!AppConfig.useFirebaseDataLayer) {
-      return null;
-    }
-
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser == null) return null;
@@ -504,10 +500,17 @@ class BackendApiService {
     }
   }
 
-  Future<UserModel> getUserProfile(String userId) async {
+  Future<UserModel> getUserProfile(
+    String userId, {
+    bool forceFirebaseRefresh = false,
+  }) async {
     try {
-      final response =
-          await _dio.get<Map<String, dynamic>>('/api/users/$userId');
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/api/users/$userId',
+        options: Options(
+          extra: {'forceFirebaseRefresh': forceFirebaseRefresh},
+        ),
+      );
       final data = response.data ?? <String, dynamic>{};
       await _persistUser(data);
       return UserModel.fromMap(data);
@@ -518,12 +521,16 @@ class BackendApiService {
 
   Future<UserModel> updateUserProfile(
     String userId,
-    Map<String, dynamic> data,
-  ) async {
+    Map<String, dynamic> data, {
+    bool forceFirebaseRefresh = false,
+  }) async {
     try {
       final response = await _dio.put<Map<String, dynamic>>(
         '/api/users/$userId',
         data: data,
+        options: Options(
+          extra: {'forceFirebaseRefresh': forceFirebaseRefresh},
+        ),
       );
       final updated = response.data ?? <String, dynamic>{};
       await _persistUser(updated);

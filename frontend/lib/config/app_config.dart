@@ -35,6 +35,11 @@ class AppConfig {
     'UP2SCHOOL_USE_LOCAL_BACKEND',
     defaultValue: false,
   );
+  static const String googleWebClientId = String.fromEnvironment(
+    'UP2SCHOOL_GOOGLE_WEB_CLIENT_ID',
+    defaultValue:
+        '846269435063-cbsj8fhcou2ojhsgspni5o5c1b3n047n.apps.googleusercontent.com',
+  );
 
   /// --- LES TESTS DE PLATEFORME ---
 
@@ -50,7 +55,8 @@ class AppConfig {
 
   /// --- LES RÈGLES DE FONCTIONNEMENT ---
 
-  // Sur téléphone, on utilise Firebase directement pour certaines données
+  // Sur téléphone, on utilise Firebase directement pour certaines données.
+  // Sur Desktop, on garde le backend comme source principale.
   static bool get useFirebaseDataLayer => Platform.isAndroid || Platform.isIOS;
 
   // Désormais, on passe par notre propre serveur pour les annonces
@@ -67,7 +73,11 @@ class AppConfig {
 
   // Certaines plateformes ont besoin que Firebase soit allumé au démarrage
   static bool get requiresFirebaseInitialization =>
-      Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+      Platform.isAndroid ||
+      Platform.isIOS ||
+      Platform.isMacOS ||
+      Platform.isLinux ||
+      Platform.isWindows;
 
   // Est-ce qu'on peut recevoir des messages Firebase ?
   static bool get usesFirebaseMessaging =>

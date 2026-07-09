@@ -109,20 +109,75 @@ class AuthService {
     }
   }
 
+  Future<void> _ensureGoogleSignInInitialized() async {
+    _googleSignInInit ??= () async {
+      final serverClientId = AppConfig.googleWebClientId.trim();
+      if (serverClientId.isNotEmpty) {
+        await GoogleSignIn.instance.initialize(
+          serverClientId: serverClientId,
+        );
+        return;
+      }
+
+      await GoogleSignIn.instance.initialize();
+    }();
+    await _googleSignInInit;
+  }
+
+  Future<GoogleSignInAccount> _acquireGoogleAccount() async {
+    await _ensureGoogleSignInInitialized();
+    final googleSignIn = GoogleSignIn.instance;
+    return await googleSignIn.authenticate(
+      scopeHint: const ['email', 'profile', 'openid'],
+    );
+  }
+
+  Future<void> _warmUpFirebaseSession(User firebaseUser) async {
+    await firebaseUser.reload();
+    await firebaseUser.getIdToken(true);
+  }
+
   Future<UserModel?> _resolveFirebaseUserProfile(User firebaseUser) async {
-    try {
-      final user = await _backendApi
-          .getUserProfile(firebaseUser.uid)
-          .timeout(const Duration(seconds: 8));
-      await _cacheFirebaseUser(user);
-      return user;
-    } catch (e) {
-      print('[AUTH] Profil backend indisponible, fallback cache: $e');
+    await _warmUpFirebaseSession(firebaseUser);
+
+    Object? lastError;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final user = await _backendApi
+            .getUserProfile(
+              firebaseUser.uid,
+              forceFirebaseRefresh: attempt > 0,
+            )
+            .timeout(const Duration(seconds: 20));
+        await _cacheFirebaseUser(user);
+        return user;
+      } catch (e) {
+        lastError = e;
+        print(
+          '[AUTH] Profil backend indisponible (tentative ${attempt + 1}/3): $e',
+        );
+        if (attempt < 2) {
+          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+        }
+      }
     }
 
     final cachedUser = await _getCachedFirebaseUser();
     if (cachedUser != null && cachedUser.id == firebaseUser.uid) {
       return cachedUser;
+    }
+
+    if (lastError != null) {
+      final message = lastError.toString().toLowerCase();
+      if (message.contains('404') || message.contains('not found')) {
+        throw 'Profil utilisateur introuvable sur le backend';
+      }
+      if (message.contains('timeout') || message.contains('timed out')) {
+        throw 'Le serveur met trop de temps à répondre. Réessayez dans quelques secondes.';
+      }
+      if (message.contains('401') || message.contains('invalid token')) {
+        throw 'Session Firebase invalide. Réessayez de vous connecter.';
+      }
     }
 
     return null;
@@ -178,24 +233,16 @@ class AuthService {
   }
 
   Future<UserModel?> signInWithGoogle() async {
-    if (!AppConfig.useFirebaseDataLayer) {
-      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
-    }
-
-    // google_sign_in n'est pas supporté sur Linux/Windows.
     if (Platform.isLinux || Platform.isWindows) {
       throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment. Utilisez plutôt email/mot de passe.';
     }
 
+    _auth ??= FirebaseAuth.instance;
+
     try {
       // google_sign_in v7+: singleton + initialize() required.
-      _googleSignInInit ??= GoogleSignIn.instance.initialize();
-      await _googleSignInInit;
-
-      final GoogleSignInAccount googleUser =
-          await GoogleSignIn.instance.authenticate();
-
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final googleUser = await _acquireGoogleAccount();
+      final googleAuth = googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
@@ -215,7 +262,9 @@ class AuthService {
         // Créer un nouveau profil
         final newUserMap = {
           'email': firebaseUser.email ?? googleUser.email,
-          'name': firebaseUser.displayName ?? googleUser.displayName ?? 'Utilisateur',
+          'name': firebaseUser.displayName ??
+              googleUser.displayName ??
+              'Utilisateur',
           'role': UserRole.student.toString().split('.').last,
           'faculty': '',
           'level': '',
@@ -223,11 +272,13 @@ class AuthService {
           'createdAt': DateTime.now().toIso8601String(),
         };
 
-        userModel = await _backendApi.updateUserProfile(firebaseUser.uid, newUserMap);
+        userModel =
+            await _backendApi.updateUserProfile(firebaseUser.uid, newUserMap);
         await _cacheFirebaseUser(userModel);
       }
-      
-      await _persistMobileBackendSession(email: userModel.email, password: ''); // Pas de mdp pour Google Auth
+
+      await _persistMobileBackendSession(
+          email: userModel.email, password: ''); // Pas de mdp pour Google Auth
       print('[AUTH] Google Sign-In réussi pour ${userModel.email}');
       return userModel;
     } on FirebaseAuthException catch (e) {
@@ -243,21 +294,17 @@ class AuthService {
   /// - Retourne uniquement les infos de base (email/nom) pour pré-remplir l'UI
   ///   sans créer/compléter le profil backend.
   Future<Map<String, String?>> beginGoogleRegistration() async {
-    if (!AppConfig.useFirebaseDataLayer) {
-      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
-    }
-
     if (Platform.isLinux || Platform.isWindows) {
       throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
     }
 
-    _googleSignInInit ??= GoogleSignIn.instance.initialize();
-    await _googleSignInInit;
+    _auth ??= FirebaseAuth.instance;
 
-    final GoogleSignInAccount googleUser =
-        await GoogleSignIn.instance.authenticate();
+    final googleUser = await _acquireGoogleAccount();
     final googleAuth = googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
     final userCredential = await _auth!.signInWithCredential(credential);
 
     final firebaseUser = userCredential.user;
@@ -280,24 +327,21 @@ class AuthService {
     required String level,
     required String field,
   }) async {
-    if (!AppConfig.useFirebaseDataLayer) {
-      throw 'Google Sign-In n\'est pas encore supporté sans Firebase.';
-    }
-
     if (Platform.isLinux || Platform.isWindows) {
       throw 'La connexion Google n’est pas disponible sur Desktop (Linux/Windows) pour le moment.';
     }
+
+    _auth ??= FirebaseAuth.instance;
 
     var firebaseUser = _auth?.currentUser;
     GoogleSignInAccount? googleUser;
 
     if (firebaseUser == null) {
-      _googleSignInInit ??= GoogleSignIn.instance.initialize();
-      await _googleSignInInit;
-      googleUser = await GoogleSignIn.instance.authenticate();
+      googleUser = await _acquireGoogleAccount();
       final googleAuth = googleUser.authentication;
-      final credential =
-          GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
       final userCredential = await _auth!.signInWithCredential(credential);
       firebaseUser = userCredential.user;
     }
@@ -394,12 +438,23 @@ class AuthService {
         createdAt: DateTime.now(),
       );
 
-      final syncedUser =
-          await _backendApi.updateUserProfile(uid, newUser.toMap());
-      await _cacheFirebaseUser(syncedUser);
-      await _persistMobileBackendSession(email: email, password: password);
-      print('[AUTH] Registration réussie pour ${syncedUser.email}');
-      return syncedUser;
+      try {
+        await _warmUpFirebaseSession(userCredential.user!);
+        final syncedUser = await _backendApi.updateUserProfile(
+          uid,
+          newUser.toMap(),
+          forceFirebaseRefresh: true,
+        );
+        await _cacheFirebaseUser(syncedUser);
+        await _persistMobileBackendSession(email: email, password: password);
+        print('[AUTH] Registration réussie pour ${syncedUser.email}');
+        return syncedUser;
+      } catch (e) {
+        try {
+          await userCredential.user?.delete();
+        } catch (_) {}
+        throw 'Inscription impossible: le profil n’a pas pu être créé sur le serveur. Réessayez.';
+      }
     } on FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthError(e);
     }
