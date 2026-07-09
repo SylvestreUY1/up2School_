@@ -628,9 +628,9 @@ class _FilesListScreenState extends State<FilesListScreen> {
     return GridView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisExtent: 150,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 380,
+        mainAxisExtent: 178,
         crossAxisSpacing: 16,
         mainAxisSpacing: 12,
       ),

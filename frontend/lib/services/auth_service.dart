@@ -111,25 +111,40 @@ class AuthService {
 
   Future<void> _ensureGoogleSignInInitialized() async {
     _googleSignInInit ??= () async {
-      final serverClientId = AppConfig.googleWebClientId.trim();
-      if (serverClientId.isNotEmpty) {
-        await GoogleSignIn.instance.initialize(
-          serverClientId: serverClientId,
-        );
-        return;
+      // Sur Android et iOS, les fichiers de configuration Firebase gèrent le clientId
+      if (Platform.isAndroid || Platform.isIOS) {
+        await GoogleSignIn.instance.initialize();
+      } else {
+        final serverClientId = AppConfig.googleWebClientId.trim();
+        if (serverClientId.isNotEmpty) {
+          await GoogleSignIn.instance.initialize(
+            serverClientId: serverClientId,
+          );
+        } else {
+          await GoogleSignIn.instance.initialize();
+        }
       }
-
-      await GoogleSignIn.instance.initialize();
     }();
     await _googleSignInInit;
   }
 
   Future<GoogleSignInAccount> _acquireGoogleAccount() async {
     await _ensureGoogleSignInInitialized();
-    final googleSignIn = GoogleSignIn.instance;
-    return await googleSignIn.authenticate(
-      scopeHint: const ['email', 'profile', 'openid'],
-    );
+    final signIn = GoogleSignIn.instance;
+    try {
+      final googleUser = await signIn.authenticate(
+        scopeHint: const ['email', 'profile', 'openid'],
+      );
+
+      if (googleUser == null) {
+        throw 'Connexion annulée par l\'utilisateur.';
+      }
+
+      return googleUser;
+    } on Exception catch (e) {
+      // Normaliser les erreurs pour l'UI
+      throw 'Erreur Google Sign-In: ${e.toString()}';
+    }
   }
 
   Future<void> _warmUpFirebaseSession(User firebaseUser) async {
@@ -233,7 +248,6 @@ class AuthService {
   }
 
   Future<UserModel?> signInWithGoogle() async {
-
     _auth ??= FirebaseAuth.instance;
 
     try {
@@ -320,7 +334,6 @@ class AuthService {
     required String level,
     required String field,
   }) async {
-
     _auth ??= FirebaseAuth.instance;
 
     var firebaseUser = _auth?.currentUser;

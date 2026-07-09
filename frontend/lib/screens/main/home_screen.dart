@@ -290,10 +290,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 360,
-        mainAxisExtent: 128,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
+        maxCrossAxisExtent: 420,
+        mainAxisExtent: 80,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
       ),
       itemCount: itemCount,
       itemBuilder: itemBuilder,
@@ -1673,6 +1673,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: AppConstants.primaryColor,
       );
 
+  TextStyle _unitCardTitleStyle(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final fontSize = width >= 1024
+        ? 14.0
+        : width >= 600
+            ? 12.0
+            : 10.0;
+
+    return _explorerCardTitleStyle.copyWith(
+      fontSize: fontSize,
+      height: 1.2,
+    );
+  }
+
   TextStyle get _explorerBadgeTextStyle => const TextStyle(
         fontFamily: 'Aclonica',
         fontSize: 14,
@@ -1801,10 +1815,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-              child: Text(
-                abbreviation,
-                style: _explorerBadgeTextStyle,
-              ),
+              child: Text(abbreviation, style: _explorerBadgeTextStyle),
             ),
           ),
           title: Text(
@@ -1917,9 +1928,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           title: Text(
             unit,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: _explorerCardTitleStyle,
+            softWrap: true,
+            style: _unitCardTitleStyle(context),
           ),
           subtitle: Text(
             context.l10n.teachingUnit,
@@ -1977,7 +1989,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          _updateLastActivity(); // Mise à jour avant navigation
+          _updateLastActivity();
           _navigateToDocumentType(type);
         },
         child: ListTile(

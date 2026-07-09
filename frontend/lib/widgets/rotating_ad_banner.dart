@@ -27,11 +27,12 @@ class _RotatingAdBannerState extends State<RotatingAdBanner> {
   final AdService _adService = AdService();
   final LocalAdStorage _localStorage = LocalAdStorage();
 
-  List<AdModel> _ads = [];     // La liste des publicités à afficher
-  int _currentIndex = 0;       // L'index de la pub actuellement visible
-  Timer? _timer;               // Le chronomètre pour changer de pub
+  List<AdModel> _ads = []; // La liste des publicités à afficher
+  int _currentIndex = 0; // L'index de la pub actuellement visible
+  Timer? _timer; // Le chronomètre pour changer de pub
   StreamSubscription? _subscription;
-  String? _currentAudienceKey; // Pour savoir si l'utilisateur a changé de profil académique
+  String?
+      _currentAudienceKey; // Pour savoir si l'utilisateur a changé de profil académique
 
   @override
   void initState() {
@@ -82,7 +83,8 @@ class _RotatingAdBannerState extends State<RotatingAdBanner> {
     }
 
     // 2. On écoute le serveur en direct pour mettre à jour si besoin
-    _subscription = _adService.getActiveAds(user: user).listen((freshAds) async {
+    _subscription =
+        _adService.getActiveAds(user: user).listen((freshAds) async {
       if (!mounted) return;
       // On met à jour notre placard local
       for (final ad in freshAds) {
@@ -121,7 +123,8 @@ class _RotatingAdBannerState extends State<RotatingAdBanner> {
    */
   void _startRotation() {
     _timer?.cancel();
-    if (_ads.length <= 1) return; // Pas besoin de tourner s'il n'y a qu'une seule pub
+    if (_ads.length <= 1)
+      return; // Pas besoin de tourner s'il n'y a qu'une seule pub
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (!mounted) return;
       setState(() {
@@ -137,19 +140,42 @@ class _RotatingAdBannerState extends State<RotatingAdBanner> {
     super.dispose();
   }
 
+  double _bannerHeightForWidth(double width) {
+    if (width >= 1024) {
+      return (width * 0.11).clamp(96.0, 132.0);
+    }
+    if (width >= 600) {
+      return (width * 0.16).clamp(104.0, 144.0);
+    }
+    return (width * 0.24).clamp(88.0, 128.0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_ads.isEmpty) return const SizedBox.shrink(); // Si pas de pub, on n'affiche rien du tout
+    if (_ads.isEmpty)
+      return const SizedBox
+          .shrink(); // Si pas de pub, on n'affiche rien du tout
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.width * 0.25,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500), // Petit effet de fondu lors du changement
-        child: AdBanner(
-          key: ValueKey(_ads[_currentIndex].imageUrl),
-          ad: _ads[_currentIndex],
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fallbackWidth = MediaQuery.of(context).size.width;
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : fallbackWidth;
+
+        return SizedBox(
+          width: double.infinity,
+          height: _bannerHeightForWidth(width),
+          child: AnimatedSwitcher(
+            duration: const Duration(
+                milliseconds: 500), // Petit effet de fondu lors du changement
+            child: AdBanner(
+              key: ValueKey(_ads[_currentIndex].imageUrl),
+              ad: _ads[_currentIndex],
+            ),
+          ),
+        );
+      },
     );
   }
 }

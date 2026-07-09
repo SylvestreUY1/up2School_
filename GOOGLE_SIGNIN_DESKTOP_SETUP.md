@@ -32,18 +32,21 @@ L'authentification Google fonctionne maintenant sur desktop (Linux et Windows) v
 ## 🚀 Utilisation sur Desktop
 
 ### Linux/Ubuntu
+
 ```bash
 cd frontend
 flutter run -d linux
 ```
 
 ### Windows
+
 ```bash
 cd frontend
 flutter run -d windows
 ```
 
 ### Lors du login
+
 1. Cliquez sur le bouton "Se connecter avec Google"
 2. Un navigateur s'ouvrira automatiquement
 3. Complétez l'authentification Google

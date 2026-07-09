@@ -79,8 +79,9 @@ class _EnhancedFileCardState extends State<EnhancedFileCard> {
     if (bytes == null) return 'Taille inconnue';
     if (bytes < 1024) return '$bytes o';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} Ko';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} Go';
   }
 
@@ -281,10 +282,14 @@ class _EnhancedFileCardState extends State<EnhancedFileCard> {
                             color: Colors.grey[600],
                             fontSize: 12,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 1,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Ajouté le ${_formatDate(widget.file.uploadedAt)}',
@@ -295,7 +300,7 @@ class _EnhancedFileCardState extends State<EnhancedFileCard> {
                             ),
                             if (widget.file.size != null) ...[
                               Text(
-                                ' • ',
+                                '•',
                                 style: TextStyle(
                                   color: Colors.grey[500],
                                   fontSize: 11,
@@ -335,60 +340,65 @@ class _EnhancedFileCardState extends State<EnhancedFileCard> {
                       ],
                     ),
                   ),
-                  PopupMenuButton(
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        child: const Row(
-                          children: [
-                            Icon(Icons.share, size: 20),
-                            SizedBox(width: 8),
-                            Text('Partager'),
-                          ],
-                        ),
-                        onTap: widget.onCopyLink,
-                      ),
-
-                      PopupMenuItem(
-                        child: const Row(
-                          children: [
-                            Icon(Icons.save_alt, size: 20),
-                            SizedBox(width: 8),
-                            Text('Exporter'),
-                          ],
-                        ),
-                        onTap: widget.onExport,
-                      ),
-
-                      // Supprimer localement (visible si le fichier est téléchargé)
-                      if (_isDownloaded)
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: PopupMenuButton(
+                      padding: EdgeInsets.zero,
+                      itemBuilder: (context) => [
                         PopupMenuItem(
+                          onTap: widget.onCopyLink,
                           child: const Row(
                             children: [
-                              Icon(Icons.delete_outline,
-                                  size: 20,
-                                  color: Color.fromARGB(255, 255, 150, 108)),
+                              Icon(Icons.share, size: 20),
                               SizedBox(width: 8),
-                              Text('Supprimer localement',
-                                  style: TextStyle(color: Color(0xFFFF6C6C))),
+                              Text('Partager'),
                             ],
                           ),
-                          onTap: widget.onDeleteLocal,
                         ),
 
-                      if (widget.canDelete)
                         PopupMenuItem(
+                          onTap: widget.onExport,
                           child: const Row(
                             children: [
-                              Icon(Icons.delete,
-                                  size: 20, color: Color(0xFFFF4A4A)),
+                              Icon(Icons.save_alt, size: 20),
                               SizedBox(width: 8),
-                              Text('Supprimer',
-                                  style: TextStyle(color: Color(0xFFFF4A4A))),
+                              Text('Exporter'),
                             ],
                           ),
-                          onTap: widget.onDelete,
                         ),
-                    ],
+
+                        // Supprimer localement (visible si le fichier est téléchargé)
+                        if (_isDownloaded)
+                          PopupMenuItem(
+                            onTap: widget.onDeleteLocal,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.delete_outline,
+                                    size: 20,
+                                    color: Color.fromARGB(255, 255, 150, 108)),
+                                SizedBox(width: 8),
+                                Text('Supprimer localement',
+                                    style: TextStyle(color: Color(0xFFFF6C6C))),
+                              ],
+                            ),
+                          ),
+
+                        if (widget.canDelete)
+                          PopupMenuItem(
+                            onTap: widget.onDelete,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.delete,
+                                    size: 20, color: Color(0xFFFF4A4A)),
+                                SizedBox(width: 8),
+                                Text('Supprimer',
+                                    style: TextStyle(color: Color(0xFFFF4A4A))),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -419,33 +429,63 @@ class _EnhancedFileCardState extends State<EnhancedFileCard> {
 
               const SizedBox(height: 1),
               if (widget.file.isPremiumLocked)
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Archive reservee aux abonnes actifs.',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 12,
-                        ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 300;
+
+                    final message = Text(
+                      'Archive reservee aux abonnes actifs.',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 12,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
+                      maxLines: compact ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                    );
+
+                    final subscribeButton = ElevatedButton.icon(
                       onPressed: widget.onSubscribe,
                       icon: const Icon(Icons.workspace_premium, size: 18),
                       label: const Text('S\'abonner'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E9366),
                         foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          message,
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: subscribeButton,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: message),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          flex: 0,
+                          child: subscribeButton,
+                        ),
+                      ],
+                    );
+                  },
                 )
               else
                 Row(
                   children: [
-                    Container(
+                    SizedBox(
                       width: 32,
                       height: 32,
                       child: IconButton(

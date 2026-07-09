@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
@@ -100,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
-    final canGoogleSignIn = true;
+    final canGoogleSignIn = kIsWeb || (!Platform.isWindows && !Platform.isLinux);
 
     return Scaffold(
       appBar: AppBar(
@@ -219,33 +220,33 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                     const SizedBox(height: 15),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: _isLoading
-                          ? const SizedBox()
-                          : ElevatedButton.icon(
-                              onPressed: canGoogleSignIn ? _signInWithGoogle : null,
-                              icon: const Icon(Icons.g_mobiledata, size: 30),
-                              label: Text(
-                                canGoogleSignIn
-                                    ? 'Continuer avec Google'
-                                    : 'Google (non disponible sur Desktop)',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                    if (canGoogleSignIn) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: _isLoading
+                            ? const SizedBox()
+                            : ElevatedButton.icon(
+                                onPressed: _signInWithGoogle,
+                                icon: const Icon(Icons.g_mobiledata, size: 30),
+                                label: Text(
+                                  'Continuer avec Google',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black87,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black87,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 10),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -207,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isWideDesktop = MediaQuery.of(context).size.width >= 1100;
-    final canGoogleSignUp = !(Platform.isLinux || Platform.isWindows);
+    final canGoogleSignUp = kIsWeb || (!Platform.isLinux && !Platform.isWindows);
 
     return Scaffold(
       appBar: AppBar(
@@ -248,19 +249,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      if (!_useGoogleSignUp)
+                      if (!_useGoogleSignUp && canGoogleSignUp) ...[
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton.icon(
-                            onPressed: (_isLoading || !canGoogleSignUp)
-                                ? null
-                                : _startGoogleSignUp,
+                            onPressed: _isLoading ? null : _startGoogleSignUp,
                             icon: const Icon(Icons.g_mobiledata, size: 30),
                             label: Text(
-                              canGoogleSignUp
-                                  ? 'Continuer avec Google'
-                                  : 'Google (non disponible sur Desktop)',
+                              'Continuer avec Google',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -275,7 +272,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
-                      if (!_useGoogleSignUp) const SizedBox(height: 20),
+                        const SizedBox(height: 20),
+                      ],
                       if (_useGoogleSignUp && _googlePrefilled) ...[
                         AppHelpers.buildInfoBanner(
                           message:
