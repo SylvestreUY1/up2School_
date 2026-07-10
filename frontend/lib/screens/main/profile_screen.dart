@@ -657,25 +657,32 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {
+    // Capturer l10n AVANT tout await pour éviter l'erreur "deactivated widget"
+    final l10n = context.l10n;
     final confirmed = await AppHelpers.showConfirmationDialog(
       context,
-      context.l10n.signOut,
-      context.l10n.signOutConfirmMessage,
+      l10n.signOut,
+      l10n.signOutConfirmMessage,
     );
     if (confirmed) {
       try {
         await Provider.of<AuthProvider>(context, listen: false).signOut();
-        AppHelpers.showSnackBar(context, context.l10n.signOutSuccess);
+        // Ne pas utiliser context.l10n après le await : le widget peut être détruit
+        if (mounted) {
+          AppHelpers.showSnackBar(context, l10n.signOutSuccess);
+        }
         // PLUS BESOIN DE NAVIGATION MANUELLE
       } catch (e) {
-        AppHelpers.showSnackBar(
-          context,
-          AppHelpers.userFriendlyErrorMessage(
-            e,
-            fallback: context.l10n.signOutFailed,
-          ),
-          isError: true,
-        );
+        if (mounted) {
+          AppHelpers.showSnackBar(
+            context,
+            AppHelpers.userFriendlyErrorMessage(
+              e,
+              fallback: l10n.signOutFailed,
+            ),
+            isError: true,
+          );
+        }
       }
     }
   }

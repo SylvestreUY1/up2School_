@@ -20,7 +20,7 @@ class BackendApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConfig.backendUrl,
-        connectTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 10), // Fail fast si serveur en veille
         receiveTimeout: const Duration(seconds: 60),
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,

@@ -32,7 +32,9 @@ class AuthService {
 
   static final AuthService _instance = AuthService._internal();
   static const _cachedFirebaseUserKey = 'cached_firebase_user_payload';
-  static Future<void>? _googleSignInInit;
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile', 'openid'],
+  );
 
   FirebaseAuth? _auth;
   FirebaseMessaging? _fcm;
@@ -109,32 +111,15 @@ class AuthService {
     }
   }
 
-  Future<void> _ensureGoogleSignInInitialized() async {
-    _googleSignInInit ??= () async {
-      // Sur Android et iOS, les fichiers de configuration Firebase gèrent le clientId
-      if (Platform.isAndroid || Platform.isIOS) {
-        await GoogleSignIn.instance.initialize();
-      } else {
-        final serverClientId = AppConfig.googleWebClientId.trim();
-        if (serverClientId.isNotEmpty) {
-          await GoogleSignIn.instance.initialize(
-            serverClientId: serverClientId,
-          );
-        } else {
-          await GoogleSignIn.instance.initialize();
-        }
-      }
-    }();
-    await _googleSignInInit;
-  }
-
   Future<GoogleSignInAccount> _acquireGoogleAccount() async {
-    await _ensureGoogleSignInInitialized();
-    final signIn = GoogleSignIn.instance;
     try {
-      final googleUser = await signIn.authenticate(
-        scopeHint: const ['email', 'profile', 'openid'],
-      );
+      // Tenter une reconnexion silencieuse d'abord (sans UI)
+      // Si ça échoue, on lance le sélecteur de compte interactif
+      final silentUser = await _googleSignIn.signInSilently();
+      if (silentUser != null) {
+        return silentUser;
+      }
+      final googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         throw 'Connexion annulée par l\'utilisateur.';
@@ -155,47 +140,45 @@ class AuthService {
   Future<UserModel?> _resolveFirebaseUserProfile(User firebaseUser) async {
     await _warmUpFirebaseSession(firebaseUser);
 
-    Object? lastError;
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        final user = await _backendApi
-            .getUserProfile(
-              firebaseUser.uid,
-              forceFirebaseRefresh: attempt > 0,
-            )
-            .timeout(const Duration(seconds: 20));
-        await _cacheFirebaseUser(user);
-        return user;
-      } catch (e) {
-        lastError = e;
-        print(
-          '[AUTH] Profil backend indisponible (tentative ${attempt + 1}/3): $e',
-        );
-        if (attempt < 2) {
-          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
-        }
-      }
-    }
-
+    // Cache-first : si on a un profil valid en cache, on le retourne TOUT DE SUITE
+    // Le rafraîchissement réseau se fera en arrière-plan si nécessaire
     final cachedUser = await _getCachedFirebaseUser();
     if (cachedUser != null && cachedUser.id == firebaseUser.uid) {
+      // Rafraîchissement silencieux en arrière-plan (sans bloquer)
+      _refreshProfileInBackground(firebaseUser);
       return cachedUser;
     }
 
-    if (lastError != null) {
-      final message = lastError.toString().toLowerCase();
-      if (message.contains('404') || message.contains('not found')) {
-        throw 'Profil utilisateur introuvable sur le backend';
-      }
-      if (message.contains('timeout') || message.contains('timed out')) {
-        throw 'Le serveur met trop de temps à répondre. Réessayez dans quelques secondes.';
-      }
-      if (message.contains('401') || message.contains('invalid token')) {
-        throw 'Session Firebase invalide. Réessayez de vous connecter.';
-      }
+    // Pas de cache valide : on doit attendre le réseau (1 seule tentative)
+    try {
+      final user = await _backendApi
+          .getUserProfile(firebaseUser.uid)
+          .timeout(const Duration(seconds: 8));
+      await _cacheFirebaseUser(user);
+      return user;
+    } catch (e) {
+      print('[AUTH] Profil backend indisponible: $e');
+      // Retourner le cache même si l'UID ne correspond pas exactement (meilleur effort)
+      if (cachedUser != null) return cachedUser;
+      // Aucun cache du tout : on lance la création de profil
+      throw 'Le serveur met trop de temps à répondre. Réessayez dans quelques secondes.';
     }
+  }
 
-    return null;
+  /// Rafraîchit le profil depuis le backend en arrière-plan sans bloquer l'UI
+  void _refreshProfileInBackground(User firebaseUser) {
+    Future.microtask(() async {
+      try {
+        final user = await _backendApi
+            .getUserProfile(firebaseUser.uid)
+            .timeout(const Duration(seconds: 15));
+        await _cacheFirebaseUser(user);
+        print('[AUTH] Profil rafraîchi en arrière-plan pour ${user.email}');
+      } catch (e) {
+        // Silencieux : l'utilisateur voit déjà les données du cache
+        print('[AUTH] Rafraîchissement arrière-plan ignoré: $e');
+      }
+    });
   }
 
   Future<UserModel?> getCachedCurrentUser() async {
@@ -251,10 +234,10 @@ class AuthService {
     _auth ??= FirebaseAuth.instance;
 
     try {
-      // google_sign_in v7+: singleton + initialize() required.
       final googleUser = await _acquireGoogleAccount();
-      final googleAuth = googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -308,8 +291,9 @@ class AuthService {
     _auth ??= FirebaseAuth.instance;
 
     final googleUser = await _acquireGoogleAccount();
-    final googleAuth = googleUser.authentication;
+    final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
     final userCredential = await _auth!.signInWithCredential(credential);
@@ -341,8 +325,9 @@ class AuthService {
 
     if (firebaseUser == null) {
       googleUser = await _acquireGoogleAccount();
-      final googleAuth = googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       final userCredential = await _auth!.signInWithCredential(credential);
@@ -474,14 +459,27 @@ class AuthService {
       return;
     }
 
-    final user = _auth!.currentUser;
-    if (user != null) {
-      final userModel = await _resolveFirebaseUserProfile(user);
-      if (userModel != null) {
-        await _unsubscribeFromTopics(userModel);
+    // Désabo topics en utilisant le CACHE (pas de réseau) pour ne pas bloquer
+    try {
+      final cachedUser = await _getCachedFirebaseUser();
+      if (cachedUser != null) {
+        await _unsubscribeFromTopics(cachedUser);
       }
+    } catch (e) {
+      print('[AUTH] Désabonnement topics ignoré: $e');
     }
-    await _backendApi.logout();
+
+    // Déconnexion backend en parallèle (ne bloque pas si échec)
+    try {
+      await _backendApi.logout();
+    } catch (e) {
+      print('[AUTH] Backend logout ignoré: $e');
+    }
+
+    // Déconnexion Firebase + Google (toujours exécuté)
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
     await _auth!.signOut();
     await _clearCachedFirebaseUser();
   }

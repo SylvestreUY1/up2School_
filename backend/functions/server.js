@@ -486,7 +486,7 @@ function getCurrentSchoolYearStart(referenceDate = new Date()) {
     referenceDate.getUTCMonth() >= 6
       ? referenceDate.getUTCFullYear()
       : referenceDate.getUTCFullYear() - 1;
-  return new Date(Date.UTC(year, 6, 1, 0, 0, 0, 0));
+  return new Date(Date.UTC(year, 7, 20, 0, 0, 0, 0));
 }
 
 /**
@@ -688,12 +688,12 @@ function buildFileAccess(userData, fileData, referenceDate = new Date()) {
   const currentSchoolYearStart = getCurrentSchoolYearStart(referenceDate);
   const subscription = buildSubscriptionSnapshot(userData, referenceDate);
   const role = String(userData?.role || "").toLowerCase();
-  
+
   // Les admins et délégués sont des "VIP"
   const isPrivilegedUser = ["admin", "delegate"].includes(role);
   // Un fichier est "vieux" s'il a été publié avant le début de l'année scolaire actuelle
   const isOldFile = publishDate.getTime() < currentSchoolYearStart.getTime();
-  
+
   // On peut accéder au fichier si :
   // - Ce n'est pas un vieux fichier
   // - OU si on est un VIP
@@ -1178,7 +1178,9 @@ async function getUserProfile(userId) {
  * Cherche un utilisateur par son email
  */
 async function getUserProfileByEmail(email) {
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
   if (!normalizedEmail) return null;
 
   const client = ensureSupabase();
@@ -1526,12 +1528,7 @@ async function ensureFacultyPathExists({ faculty, level, field, unit }) {
   const normalizedField = normalizeString(field);
   const normalizedUnit = normalizeString(unit);
 
-  if (
-    !facultyName ||
-    !normalizedLevel ||
-    !normalizedField ||
-    !normalizedUnit
-  ) {
+  if (!facultyName || !normalizedLevel || !normalizedField || !normalizedUnit) {
     return;
   }
 
@@ -1583,7 +1580,8 @@ async function ensureFacultyPathExists({ faculty, level, field, unit }) {
 
   const hasChanged =
     JSON.stringify(levels) !== JSON.stringify(current.levels || []) ||
-    JSON.stringify(fields) !== JSON.stringify(normalizeObject(current.fields)) ||
+    JSON.stringify(fields) !==
+      JSON.stringify(normalizeObject(current.fields)) ||
     JSON.stringify(units) !== JSON.stringify(normalizeObject(current.units));
 
   if (!hasChanged) {
@@ -1678,7 +1676,8 @@ async function deleteExpiredAdsFromSupabase(client = ensureSupabase()) {
 
   const storagePaths = new Set();
   for (const ad of expiredAds) {
-    const storagePath = ad.storage_path || extractStoragePathFromUrl(ad.image_url);
+    const storagePath =
+      ad.storage_path || extractStoragePathFromUrl(ad.image_url);
     if (storagePath) storagePaths.add(storagePath);
   }
 
@@ -2077,7 +2076,9 @@ async function notifyForAdCreation(adId, row, req) {
         data: {
           type: "ad",
           id: adId,
-          title: row.is_global ? "Nouvelle annonce globale" : "Nouvelle annonce",
+          title: row.is_global
+            ? "Nouvelle annonce globale"
+            : "Nouvelle annonce",
           body: row.description || row.title || "",
           description: row.description || "",
           targetUrl: row.target_url || "",
@@ -2265,7 +2266,9 @@ async function requirePrivileged(req, res, next) {
     const user = await getUserProfile(req.userId);
     const role = normalizeRole(user?.role);
     if (role !== "admin" && role !== "delegate") {
-      return res.status(403).json({ error: "Privileged access required (Admin or Delegate)" });
+      return res
+        .status(403)
+        .json({ error: "Privileged access required (Admin or Delegate)" });
     }
     req.currentUserProfile = user;
     next();
@@ -2279,11 +2282,18 @@ async function requirePrivileged(req, res, next) {
 /**
  * Active l'abonnement d'un utilisateur après un paiement réussi
  */
-async function applySubscriptionActivation({ transactionId, verification, webhookPayload = null }) {
+async function applySubscriptionActivation({
+  transactionId,
+  verification,
+  webhookPayload = null,
+}) {
   const client = ensureSupabase();
-  const payment = await supabaseMaybeSingle(client.from(TABLES.payments).select("*").eq("id", transactionId));
+  const payment = await supabaseMaybeSingle(
+    client.from(TABLES.payments).select("*").eq("id", transactionId),
+  );
 
-  if (!payment) throw new Error(`Payment transaction ${transactionId} not found`);
+  if (!payment)
+    throw new Error(`Payment transaction ${transactionId} not found`);
 
   const isAccepted = verification?.success === true;
   const paymentDate = new Date();
@@ -2299,13 +2309,19 @@ async function applySubscriptionActivation({ transactionId, verification, webhoo
   };
 
   if (!isAccepted) {
-    await client.from(TABLES.payments).update(paymentUpdate).eq("id", transactionId);
+    await client
+      .from(TABLES.payments)
+      .update(paymentUpdate)
+      .eq("id", transactionId);
     return { activated: false, status: paymentUpdate.status };
   }
 
   // Si déjà activé, on ne fait rien de plus
   if (["accepted", "fulfilled"].includes(String(payment.status || ""))) {
-    await client.from(TABLES.payments).update(paymentUpdate).eq("id", transactionId);
+    await client
+      .from(TABLES.payments)
+      .update(paymentUpdate)
+      .eq("id", transactionId);
     return { activated: true, status: payment.status };
   }
 
@@ -2352,7 +2368,13 @@ async function applySubscriptionActivation({ transactionId, verification, webhoo
 /**
  * Initialise un nouveau paiement via PaiementPro
  */
-async function createPaiementProCheckout({ user, phone, displayName, baseUrl, source = "app" }) {
+async function createPaiementProCheckout({
+  user,
+  phone,
+  displayName,
+  baseUrl,
+  source = "app",
+}) {
   let merchantId;
   try {
     const config = getPaiementProConfig();
@@ -2382,8 +2404,15 @@ async function createPaiementProCheckout({ user, phone, displayName, baseUrl, so
   const amount = getSubscriptionAmount();
   const transactionId = `UPSUB${Date.now()}${uuidv4().slice(0, 8)}`;
   const schoolYearLabel = getSchoolYearLabel();
-  const metadata = { userId: user.id, plan: "annual_school_year", schoolYear: schoolYearLabel, source };
-  const safeDisplayName = String(displayName || user.name || "Utilisateur Up2School").trim();
+  const metadata = {
+    userId: user.id,
+    plan: "annual_school_year",
+    schoolYear: schoolYearLabel,
+    source,
+  };
+  const safeDisplayName = String(
+    displayName || user.name || "Utilisateur Up2School",
+  ).trim();
   const [customerFirstName, ...surnameParts] = safeDisplayName.split(" ");
   const customerLastname = surnameParts.join(" ") || "Up2School";
 
@@ -2427,11 +2456,28 @@ async function createPaiementProCheckout({ user, phone, displayName, baseUrl, so
     paiementProResponse = await axios.post(
       "https://paiementpro.net/webservice/onlinepayment/init/curl-init.php",
       payload,
-      { headers: { "Content-Type": "application/json", "User-Agent": "Up2School-Backend/2.0" }, timeout: 30000 },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Up2School-Backend/2.0",
+        },
+        timeout: 30000,
+      },
     );
   } catch (axiosError) {
-    const errorDetails = { message: axiosError.message, status: axiosError.response?.status, data: axiosError.response?.data };
-    await client.from(TABLES.payments).update({ status: "initialization_failed", updated_at: nowIso(), provider_response: errorDetails }).eq("id", transactionId);
+    const errorDetails = {
+      message: axiosError.message,
+      status: axiosError.response?.status,
+      data: axiosError.response?.data,
+    };
+    await client
+      .from(TABLES.payments)
+      .update({
+        status: "initialization_failed",
+        updated_at: nowIso(),
+        provider_response: errorDetails,
+      })
+      .eq("id", transactionId);
     const error = new Error("PaiementPro API call failed");
     error.statusCode = 502;
     error.payload = { details: errorDetails, transactionId };
@@ -2441,7 +2487,14 @@ async function createPaiementProCheckout({ user, phone, displayName, baseUrl, so
   const responseData = paiementProResponse.data || {};
   const paymentUrl = responseData?.url;
   if (!paymentUrl) {
-    await client.from(TABLES.payments).update({ status: "initialization_failed", updated_at: nowIso(), provider_response: responseData }).eq("id", transactionId);
+    await client
+      .from(TABLES.payments)
+      .update({
+        status: "initialization_failed",
+        updated_at: nowIso(),
+        provider_response: responseData,
+      })
+      .eq("id", transactionId);
     const error = new Error("PaiementPro did not return a payment URL");
     error.statusCode = 502;
     error.payload = { details: responseData, transactionId };
@@ -2449,9 +2502,24 @@ async function createPaiementProCheckout({ user, phone, displayName, baseUrl, so
   }
 
   // Tout est OK, on renvoie le lien de paiement à l'application
-  await client.from(TABLES.payments).update({ status: "pending_payment", payment_url: paymentUrl, provider_response: responseData, updated_at: nowIso() }).eq("id", transactionId);
+  await client
+    .from(TABLES.payments)
+    .update({
+      status: "pending_payment",
+      payment_url: paymentUrl,
+      provider_response: responseData,
+      updated_at: nowIso(),
+    })
+    .eq("id", transactionId);
 
-  return { transactionId, paymentUrl, amount, currency: "XOF", status: "pending_payment", schoolYearLabel };
+  return {
+    transactionId,
+    paymentUrl,
+    amount,
+    currency: "XOF",
+    status: "pending_payment",
+    schoolYearLabel,
+  };
 }
 
 // ==================== LES ROUTES (LES ADRESSES DE L'API) ====================
@@ -2479,10 +2547,15 @@ app.get("/health", (req, res) => {
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { email, password, name, phone, faculty, level, field } = req.body;
-    if (!email || !password || !name) return res.status(400).json({ error: "Missing required fields" });
+    if (!email || !password || !name)
+      return res.status(400).json({ error: "Missing required fields" });
 
     // Création chez Google Firebase Auth
-    const userRecord = await auth.createUser({ email, password, displayName: name });
+    const userRecord = await auth.createUser({
+      email,
+      password,
+      displayName: name,
+    });
 
     // Création du profil dans notre base de données Supabase
     const user = await upsertUserProfile({
@@ -2501,9 +2574,19 @@ app.post("/api/auth/register", async (req, res) => {
 
     // Connexion immédiate
     const login = await signInWithPassword(email, password);
-    await appendHistory({ userId: user.id, action: "auth_register", entityType: "user", entityId: user.id });
+    await appendHistory({
+      userId: user.id,
+      action: "auth_register",
+      entityType: "user",
+      entityId: user.id,
+    });
 
-    res.json({ success: true, user: userResponse(user), token: login.idToken, refreshToken: login.refreshToken });
+    res.json({
+      success: true,
+      user: userResponse(user),
+      token: login.idToken,
+      refreshToken: login.refreshToken,
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -2515,17 +2598,35 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+    if (!email || !password)
+      return res.status(400).json({ error: "Email and password required" });
 
     const login = await signInWithPassword(email, password);
     let user = await ensureLoginProfile(login);
 
-    const updated = await upsertUserProfile({ id: login.localId, email: login.email || email, lastActivity: nowIso() }, user);
+    const updated = await upsertUserProfile(
+      {
+        id: login.localId,
+        email: login.email || email,
+        lastActivity: nowIso(),
+      },
+      user,
+    );
     user = updated;
 
-    await appendHistory({ userId: user.id, action: "auth_login", entityType: "user", entityId: user.id });
+    await appendHistory({
+      userId: user.id,
+      action: "auth_login",
+      entityType: "user",
+      entityId: user.id,
+    });
 
-    res.json({ success: true, user: userResponse(user), token: login.idToken, refreshToken: login.refreshToken });
+    res.json({
+      success: true,
+      user: userResponse(user),
+      token: login.idToken,
+      refreshToken: login.refreshToken,
+    });
   } catch (error) {
     const authError = extractFirebaseAuthError(error, "Connexion impossible");
     res.status(authError.status).json({ error: authError.message });
@@ -2538,16 +2639,35 @@ app.post("/api/auth/login", async (req, res) => {
 app.post("/api/auth/refresh", async (req, res) => {
   try {
     const refreshToken = normalizeString(req.body?.refreshToken);
-    if (!refreshToken) return res.status(400).json({ error: "Refresh token is required" });
+    if (!refreshToken)
+      return res.status(400).json({ error: "Refresh token is required" });
 
     const refreshed = await refreshIdToken(refreshToken);
-    let user = await ensureLoginProfile({ localId: refreshed.user_id, email: refreshed.email || "" });
+    let user = await ensureLoginProfile({
+      localId: refreshed.user_id,
+      email: refreshed.email || "",
+    });
 
-    user = await upsertUserProfile({ id: refreshed.user_id, email: refreshed.email || user.email || "", lastActivity: nowIso() }, user);
+    user = await upsertUserProfile(
+      {
+        id: refreshed.user_id,
+        email: refreshed.email || user.email || "",
+        lastActivity: nowIso(),
+      },
+      user,
+    );
 
-    res.json({ success: true, user: userResponse(user), token: refreshed.id_token, refreshToken: refreshed.refresh_token || refreshToken });
+    res.json({
+      success: true,
+      user: userResponse(user),
+      token: refreshed.id_token,
+      refreshToken: refreshed.refresh_token || refreshToken,
+    });
   } catch (error) {
-    const authError = extractFirebaseAuthError(error, "Rafraichissement de session impossible");
+    const authError = extractFirebaseAuthError(
+      error,
+      "Rafraichissement de session impossible",
+    );
     res.status(authError.status).json({ error: authError.message });
   }
 });
@@ -2565,7 +2685,8 @@ app.post("/api/auth/logout", verifyToken, async (req, res) => {
 app.post("/api/auth/verify-password", verifyToken, async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password) return res.status(400).json({ error: "Password is required" });
+    if (!password)
+      return res.status(400).json({ error: "Password is required" });
 
     const user = await auth.getUser(req.userId);
     await signInWithPassword(user.email, password);
@@ -2581,7 +2702,8 @@ app.post("/api/auth/verify-password", verifyToken, async (req, res) => {
 app.post("/api/auth/change-password", verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) return res.status(400).json({ error: "Both passwords are required" });
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ error: "Both passwords are required" });
 
     const user = await auth.getUser(req.userId);
     await signInWithPassword(user.email, currentPassword);
@@ -2627,7 +2749,10 @@ app.delete("/api/auth/account", verifyToken, async (req, res) => {
  */
 app.get("/api/users", verifyToken, requireAdmin, async (req, res) => {
   try {
-    const users = await listUsers({ role: req.query.role, query: req.query.query });
+    const users = await listUsers({
+      role: req.query.role,
+      query: req.query.query,
+    });
     res.json(users.map(userResponse));
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2641,7 +2766,8 @@ app.get("/api/users/:userId", verifyToken, async (req, res) => {
   try {
     if (req.userId !== req.params.userId) {
       const currentUser = await getUserProfile(req.userId);
-      if (!currentUser || normalizeRole(currentUser.role) !== "admin") return res.status(403).json({ error: "Unauthorized" });
+      if (!currentUser || normalizeRole(currentUser.role) !== "admin")
+        return res.status(403).json({ error: "Unauthorized" });
     }
 
     const user = await getUserProfile(req.params.userId);
@@ -2660,10 +2786,14 @@ app.put("/api/users/:userId", verifyToken, async (req, res) => {
     const isSelf = req.userId === req.params.userId;
     const currentUser = await getUserProfile(req.userId);
     const isAdmin = normalizeRole(currentUser?.role) === "admin";
-    if (!isSelf && !isAdmin) return res.status(403).json({ error: "Unauthorized" });
+    if (!isSelf && !isAdmin)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const existing = await getUserProfile(req.params.userId);
-    const updated = await upsertUserProfile({ ...req.body, id: req.params.userId }, existing || { id: req.params.userId, email: req.body.email || "" });
+    const updated = await upsertUserProfile(
+      { ...req.body, id: req.params.userId },
+      existing || { id: req.params.userId, email: req.body.email || "" },
+    );
     res.json(userResponse(updated));
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2793,7 +2923,9 @@ app.post("/api/subscriptions/checkout", verifyToken, async (req, res) => {
 
 app.post("/api/subscriptions/web-checkout", async (req, res) => {
   try {
-    const email = String(req.body.email || "").trim().toLowerCase();
+    const email = String(req.body.email || "")
+      .trim()
+      .toLowerCase();
     const phone = String(req.body.phone || "").trim();
 
     if (!email) {
@@ -3534,20 +3666,25 @@ app.post(
   },
 );
 
-app.delete("/api/storage/object", verifyToken, requirePrivileged, async (req, res) => {
-  try {
-    const storagePath =
-      req.body.storagePath || extractStoragePathFromUrl(req.body.url);
-    if (!storagePath) {
-      return res.status(400).json({ error: "Storage path is required" });
-    }
+app.delete(
+  "/api/storage/object",
+  verifyToken,
+  requirePrivileged,
+  async (req, res) => {
+    try {
+      const storagePath =
+        req.body.storagePath || extractStoragePathFromUrl(req.body.url);
+      if (!storagePath) {
+        return res.status(400).json({ error: "Storage path is required" });
+      }
 
-    await deleteObjectFromR2(storagePath).catch(() => {});
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+      await deleteObjectFromR2(storagePath).catch(() => {});
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 
 app.get(
   "/api/storage/download-url/:fileId",
@@ -3889,19 +4026,25 @@ app.get("/api/ads", verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/ads/upload-image", verifyToken, requireAdmin, upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+app.post(
+  "/api/ads/upload-image",
+  verifyToken,
+  requireAdmin,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const storagePath = `ads/${Date.now()}-${uuidv4().slice(0, 8)}${path.extname(req.file.originalname).toLowerCase()}`;
-    await uploadBufferToR2(storagePath, req.file.buffer, req.file.mimetype);
+      const storagePath = `ads/${Date.now()}-${uuidv4().slice(0, 8)}${path.extname(req.file.originalname).toLowerCase()}`;
+      await uploadBufferToR2(storagePath, req.file.buffer, req.file.mimetype);
 
-    const imageUrl = buildStorageProxyUrl(req, storagePath, "ad.jpg");
-    res.json({ success: true, imageUrl, storagePath });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+      const imageUrl = buildStorageProxyUrl(req, storagePath, "ad.jpg");
+      res.json({ success: true, imageUrl, storagePath });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 // ==================== ROUTES DES PUBLICITÉS (ADS) ====================
 
 /**
@@ -3916,7 +4059,10 @@ app.get("/api/ads", tryVerifyToken, async (req, res) => {
       const client = ensureSupabase();
       await deleteExpiredAdsFromSupabase(client);
 
-      const { data, error } = await client.from(TABLES.ads).select("*").order("created_at", { ascending: false });
+      const { data, error } = await client
+        .from(TABLES.ads)
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return res.json((data || []).map((row) => adResponse(req, row)));
     }
@@ -3934,11 +4080,16 @@ app.get("/api/ads", tryVerifyToken, async (req, res) => {
 app.post("/api/ads", verifyToken, requireAdmin, async (req, res) => {
   try {
     const validationError = validateAdPayload(req.body);
-    if (validationError) return res.status(400).json({ error: validationError });
+    if (validationError)
+      return res.status(400).json({ error: validationError });
 
     const client = ensureSupabase();
     const row = toAdRow(req.body, req.userId);
-    const { data, error } = await client.from(TABLES.ads).insert(row).select("*").single();
+    const { data, error } = await client
+      .from(TABLES.ads)
+      .insert(row)
+      .select("*")
+      .single();
 
     if (error) throw error;
     if (data.is_active) await notifyForAdCreation(data.id, data, req);
@@ -3955,7 +4106,11 @@ app.post("/api/ads", verifyToken, requireAdmin, async (req, res) => {
 app.delete("/api/ads/:adId", verifyToken, requireAdmin, async (req, res) => {
   try {
     const client = ensureSupabase();
-    const { data: ad } = await client.from(TABLES.ads).select("storage_path").eq("id", req.params.adId).single();
+    const { data: ad } = await client
+      .from(TABLES.ads)
+      .select("storage_path")
+      .eq("id", req.params.adId)
+      .single();
     await client.from(TABLES.ads).delete().eq("id", req.params.adId);
     if (ad?.storage_path) await deleteObjectFromR2(ad.storage_path);
     res.json({ success: true });
@@ -3970,10 +4125,17 @@ app.delete("/api/ads/:adId", verifyToken, requireAdmin, async (req, res) => {
 app.post("/api/ads/:adId/click", verifyToken, async (req, res) => {
   try {
     const client = ensureSupabase();
-    const { data: ad } = await client.from(TABLES.ads).select("clicks").eq("id", req.params.adId).single();
+    const { data: ad } = await client
+      .from(TABLES.ads)
+      .select("clicks")
+      .eq("id", req.params.adId)
+      .single();
     if (!ad) return res.status(404).json({ error: "Ad not found" });
 
-    await client.from(TABLES.ads).update({ clicks: (ad.clicks || 0) + 1 }).eq("id", req.params.adId);
+    await client
+      .from(TABLES.ads)
+      .update({ clicks: (ad.clicks || 0) + 1 })
+      .eq("id", req.params.adId);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -3983,79 +4145,113 @@ app.post("/api/ads/:adId/click", verifyToken, async (req, res) => {
 /**
  * Uploader une image pour une publicité (Admin seulement)
  */
-app.post("/api/ads/upload-image", verifyToken, requireAdmin, upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+app.post(
+  "/api/ads/upload-image",
+  verifyToken,
+  requireAdmin,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const storagePath = `ads/${Date.now()}-${uuidv4().slice(0, 8)}${path.extname(req.file.originalname).toLowerCase()}`;
-    await uploadBufferToR2(storagePath, req.file.buffer, req.file.mimetype);
+      const storagePath = `ads/${Date.now()}-${uuidv4().slice(0, 8)}${path.extname(req.file.originalname).toLowerCase()}`;
+      await uploadBufferToR2(storagePath, req.file.buffer, req.file.mimetype);
 
-    const imageUrl = buildStorageProxyUrl(req, storagePath, "ad.jpg");
-    res.json({ success: true, imageUrl, storagePath });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+      const imageUrl = buildStorageProxyUrl(req, storagePath, "ad.jpg");
+      res.json({ success: true, imageUrl, storagePath });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 
 // ==================== ROUTES DES NOTIFICATIONS ====================
 
 /**
  * Enregistrer un appareil pour recevoir des notifications directes (WebSocket)
  */
-app.post("/api/notifications/register-device", verifyToken, async (req, res) => {
-  try {
-    const { device } = req.body;
-    if (!device) return res.status(400).json({ error: "Device info is required" });
+app.post(
+  "/api/notifications/register-device",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { device } = req.body;
+      if (!device)
+        return res.status(400).json({ error: "Device info is required" });
 
-    const user = await getUserProfileOrThrow(req.userId);
-    const devices = Array.isArray(user.devices) ? [...user.devices] : [];
-    const existingIndex = devices.findIndex((d) => d.id === device.id);
+      const user = await getUserProfileOrThrow(req.userId);
+      const devices = Array.isArray(user.devices) ? [...user.devices] : [];
+      const existingIndex = devices.findIndex((d) => d.id === device.id);
 
-    if (existingIndex >= 0) devices[existingIndex] = { ...devices[existingIndex], ...device, lastSeen: nowIso() };
-    else devices.push({ ...device, lastSeen: nowIso() });
+      if (existingIndex >= 0)
+        devices[existingIndex] = {
+          ...devices[existingIndex],
+          ...device,
+          lastSeen: nowIso(),
+        };
+      else devices.push({ ...device, lastSeen: nowIso() });
 
-    await upsertUserProfile({ id: req.userId, devices });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+      await upsertUserProfile({ id: req.userId, devices });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 
 /**
  * Enregistrer un jeton FCM (pour les notifications Push sur mobile)
  */
-app.post("/api/notifications/register-push-token", verifyToken, async (req, res) => {
-  try {
-    const { token, deviceId } = req.body;
-    if (!token) return res.status(400).json({ error: "Token is required" });
+app.post(
+  "/api/notifications/register-push-token",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { token, deviceId } = req.body;
+      if (!token) return res.status(400).json({ error: "Token is required" });
 
-    const user = await getUserProfileOrThrow(req.userId);
-    const tokens = Array.isArray(user.push_tokens) ? [...user.push_tokens] : [];
-    if (!tokens.some((t) => (typeof t === "string" ? t === token : t.token === token))) {
-      tokens.push({ token, deviceId, createdAt: nowIso() });
+      const user = await getUserProfileOrThrow(req.userId);
+      const tokens = Array.isArray(user.push_tokens)
+        ? [...user.push_tokens]
+        : [];
+      if (
+        !tokens.some((t) =>
+          typeof t === "string" ? t === token : t.token === token,
+        )
+      ) {
+        tokens.push({ token, deviceId, createdAt: nowIso() });
+      }
+
+      await upsertUserProfile({ id: req.userId, pushTokens: tokens });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-
-    await upsertUserProfile({ id: req.userId, pushTokens: tokens });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  },
+);
 
 /**
  * Supprimer un jeton Push
  */
-app.post("/api/notifications/unregister-push-token", verifyToken, async (req, res) => {
-  try {
-    const { token } = req.body;
-    const user = await getUserProfileOrThrow(req.userId);
-    const tokens = (Array.isArray(user.push_tokens) ? user.push_tokens : []).filter((t) => (typeof t === "string" ? t !== token : t.token !== token));
-    await upsertUserProfile({ id: req.userId, pushTokens: tokens });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+app.post(
+  "/api/notifications/unregister-push-token",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { token } = req.body;
+      const user = await getUserProfileOrThrow(req.userId);
+      const tokens = (
+        Array.isArray(user.push_tokens) ? user.push_tokens : []
+      ).filter((t) =>
+        typeof t === "string" ? t !== token : t.token !== token,
+      );
+      await upsertUserProfile({ id: req.userId, pushTokens: tokens });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 
 /**
  * Récupérer mes notifications non lues (Mode manuel)
@@ -4063,7 +4259,13 @@ app.post("/api/notifications/unregister-push-token", verifyToken, async (req, re
 app.get("/api/notifications/poll", verifyToken, async (req, res) => {
   try {
     const client = ensureSupabase();
-    const { data, error } = await client.from(TABLES.notifications).select("*").eq("user_id", req.userId).eq("read", false).order("timestamp", { ascending: false }).limit(50);
+    const { data, error } = await client
+      .from(TABLES.notifications)
+      .select("*")
+      .eq("user_id", req.userId)
+      .eq("read", false)
+      .order("timestamp", { ascending: false })
+      .limit(50);
     if (error) throw error;
     res.json((data || []).map(notificationResponse));
   } catch (error) {
@@ -4074,15 +4276,23 @@ app.get("/api/notifications/poll", verifyToken, async (req, res) => {
 /**
  * Marquer une notification comme lue
  */
-app.post("/api/notifications/mark-read/:notificationId", verifyToken, async (req, res) => {
-  try {
-    const client = ensureSupabase();
-    await client.from(TABLES.notifications).update({ read: true, read_at: nowIso() }).eq("id", req.params.notificationId).eq("user_id", req.userId);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+app.post(
+  "/api/notifications/mark-read/:notificationId",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const client = ensureSupabase();
+      await client
+        .from(TABLES.notifications)
+        .update({ read: true, read_at: nowIso() })
+        .eq("id", req.params.notificationId)
+        .eq("user_id", req.userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+);
 
 // ==================== GESTION DES WEBSOCKETS (CONEXIONS EN DIRECT) ====================
 

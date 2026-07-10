@@ -58,7 +58,7 @@ class AdBanner extends StatelessWidget {
       onTap: () => _handleTap(context),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        height: 100,
+        //  SUPPRESSION DE height: 100 (la hauteur est gérée par le parent)
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
@@ -77,7 +77,9 @@ class AdBanner extends StatelessWidget {
               // Image en cache
               CachedNetworkImage(
                 imageUrl: ad.imageUrl,
-                fit: BoxFit.cover,
+                //  MODIFICATION : BoxFit.fitWidth pour respecter le ratio
+                fit: BoxFit.fitWidth,
+                width: double.infinity,
                 placeholder: (context, url) => Container(
                   color: Colors.grey[300],
                   child: const Center(

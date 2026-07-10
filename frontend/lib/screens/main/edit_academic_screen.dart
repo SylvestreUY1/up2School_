@@ -20,7 +20,7 @@ class _EditAcademicScreenState extends State<EditAcademicScreen> {
   String? _selectedField;
   List<String> _levels = [];
   List<String> _fields = [];
-  bool _isLoading = false;
+  bool _isLoading = true; // true dès le début pour éviter un rendu avant _loadData()
   bool _saving = false;
 
   @override
@@ -44,9 +44,13 @@ class _EditAcademicScreenState extends State<EditAcademicScreen> {
       final user = authProvider.currentUser;
 
       if (user != null) {
-        _selectedFaculty = user.faculty;
-        _selectedLevel = user.level;
-        _selectedField = user.field;
+        // Normaliser les chaînes vides en null pour éviter le crash du DropdownButton
+        _selectedFaculty =
+            (user.faculty?.trim().isNotEmpty == true) ? user.faculty : null;
+        _selectedLevel =
+            (user.level?.trim().isNotEmpty == true) ? user.level : null;
+        _selectedField =
+            (user.field?.trim().isNotEmpty == true) ? user.field : null;
 
         // Charger les niveaux si faculté déjà définie
         if (_selectedFaculty != null) {
@@ -62,6 +66,11 @@ class _EditAcademicScreenState extends State<EditAcademicScreen> {
               (f) => f.name == _selectedFaculty,
               orElse: () => _faculties.first);
           _fields = faculty.fields[_selectedLevel!] ?? [];
+
+          // Si la filière stockée n'est plus dans la liste, la réinitialiser
+          if (_selectedField != null && !_fields.contains(_selectedField)) {
+            _selectedField = null;
+          }
         }
       }
     } catch (e) {

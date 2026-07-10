@@ -140,14 +140,29 @@ class _RotatingAdBannerState extends State<RotatingAdBanner> {
     super.dispose();
   }
 
+  /**
+   * CALCUL DE LA HAUTEUR - VERSION HYBRIDE
+   * - Mobile (< 600 dp) : conserve l'ancienne logique (24% de la largeur)
+   * - Tablette (600-1024 dp) : utilise le ratio 6.4:1 pour un rendu parfait
+   * - Desktop (>= 1024 dp) : utilise le ratio 6.4:1 pour un rendu parfait
+   */
   double _bannerHeightForWidth(double width) {
-    if (width >= 1024) {
-      return (width * 0.11).clamp(96.0, 132.0);
+    const double tabletBreakpoint = 600.0;
+    const double desktopBreakpoint = 1024.0;
+    const double aspectRatio = 6.4; // Ratio standard 320x50
+    const double horizontalMargins = 24.0; // 12px de chaque côté (AdBanner)
+
+    // MOBILE : on conserve l'ancienne logique qui fonctionnait bien
+    if (width < tabletBreakpoint) {
+      return (width * 0.24).clamp(88.0, 128.0);
     }
-    if (width >= 600) {
-      return (width * 0.16).clamp(104.0, 144.0);
-    }
-    return (width * 0.24).clamp(88.0, 128.0);
+
+    // TABLETTE ET DESKTOP : on utilise le ratio pour respecter les proportions
+    final double availableWidth = width - horizontalMargins;
+    double height = availableWidth / aspectRatio;
+
+    // Clampage adapté aux grands écrans
+    return height.clamp(104.0, 200.0);
   }
 
   @override
